@@ -1,5 +1,11 @@
-import { ComponentExample } from "@/components/component-example";
+import Hero from "@/components/hero";
+import Navbar from "@/components/navbar";
 
 export default function Page() {
-return <ComponentExample />;
+  return (
+    <div className="max-w-7xl">
+      <Navbar />
+      <Hero />
+    </div>
+  );
 }
