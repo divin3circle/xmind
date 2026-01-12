@@ -1,0 +1,14 @@
+node_modules/
+dist/
+artifacts/
+cache/
+typechain-types/
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+coverage/
+coverage.json
+.DS_Store
+.vscode/
+*.log
