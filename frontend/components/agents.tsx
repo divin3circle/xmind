@@ -85,9 +85,7 @@ function Agents() {
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
 
-        <h1 className="text-2xl md:text-3xl font-bold font-sans mb-4 text-left">
-          Listed Agents
-        </h1>
+        <h1 className="text-xl font-bold font-sans text-left">Listed Agents</h1>
         <p className="text-muted-foreground text-xs font-mono max-w-md leading-relaxed mt-1">
           Browse or search agents by category
         </p>

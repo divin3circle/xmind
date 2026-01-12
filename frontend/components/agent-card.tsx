@@ -62,9 +62,10 @@ function AgentCard({ agent }: { agent: Agent }) {
               <Image
                 src={agent.image}
                 alt={agent.agentName}
-                width={50}
-                height={50}
-                className="w-7 h-7 object-cover "
+                width={40}
+                height={40}
+                className="w-7 h-7 object-cover"
+                priority={false}
               />
             </div>
 
