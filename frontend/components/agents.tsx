@@ -79,7 +79,7 @@ const mockAgents: Agent[] = [
 function Agents() {
   return (
     <section className="my-24">
-      <div className="py-8 mx-4 border mt-8 relative border-dashed px-4">
+      <div className="py-8 mx-4 border mt-8 relative border-dashed px-4 overflow-hidden">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />

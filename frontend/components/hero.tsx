@@ -5,7 +5,7 @@ import { IconPlus } from "@tabler/icons-react";
 
 function Hero() {
   return (
-    <div className="py-8 flex flex-col-reverse items-center md:flex-row mx-4 border mt-8 relative border-dashed">
+    <div className="py-8 flex flex-col-reverse items-center md:flex-row mx-4 overflow-hidden border mt-8 relative border-dashed">
       <IconPlus className="absolute -top-3 -right-3" color="gray" />
       <IconPlus className="absolute -top-3 -left-3" color="gray" />
       <IconPlus className="absolute -bottom-3 -right-3" color="gray" />

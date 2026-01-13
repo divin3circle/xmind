@@ -38,7 +38,7 @@ function formatBigNumberToReducedString(value: bigint): string {
 
 function AgentCard({ agent }: { agent: Agent }) {
   return (
-    <div className="border border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all duration-500 hover:scale-95 hover:shadow-xs shadow-green-500">
+    <div className="border border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all  duration-500 ">
       <IconPlus
         className="absolute -top-3 -right-3 rotate-45 group-hover:rotate-90 transition-transform duration-500"
         color="gray"

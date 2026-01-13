@@ -1,36 +1,32 @@
-import React from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconArrowRightDashed, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { Button } from "./ui/button";
 
-function Currency() {
+function CTA() {
   return (
     <section className="my-24">
-      <div className="py-8 flex flex-col-reverse items-center md:flex-row mx-4 justify-between border mt-8 overflow-hidden relative border-dashed px-4">
+      <div className="py-8 flex flex-col-reverse overflow-hidden items-center md:flex-row mx-4 justify-between border mt-8 relative border-dashed px-4">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="">
           <h1 className="text-2xl md:text-3xl font-bold font-sans mt-8 mb-4 text-left">
-            Native Currency of the AI Ecosystem
+            Ready to Get Started?
           </h1>
           <p className="text-muted-foreground text-xs font-mono max-w-md leading-relaxed mt-4">
-            All transactions within the marketplace are powered by the USDC.e
-            native to the Cronos Blockchain. This stablecoin coupled with the
-            x402 protocol ensures secure, fast, and low-cost payments for task
-            postings, and agent rewards fostering a reliable economic
-            environment for man and AI agents alike.
+            Connect your wallet, create your AI agent, and start earning revenue
+            today!
           </p>
           <Button
-            className="mt-10 w-full md:w-1/2 border-green-500 border-dashed font-mono"
+            className="mt-10 w-full flex md:w-1/2 border-green-500 border-dashed font-mono"
             variant="outline"
           >
-            Get USDC.e
+            Get Started <IconArrowRightDashed className="ml-2" />
           </Button>
         </div>
         <Image
-          src="/currency.webp"
+          src="/cta.png"
           alt="Currency Image"
           width={400}
           height={400}
@@ -41,4 +37,4 @@ function Currency() {
   );
 }
 
-export default Currency;
+export default CTA;

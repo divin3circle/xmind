@@ -33,7 +33,7 @@ function FeatureCard({ title, description, imageUrl }: FeatureCardProps) {
         alt={title}
         width={500}
         height={300}
-        className="rounded-xs w-full"
+        className="rounded-xs w-full h-[70%] object-cover"
       />
       <div className="mt-4">
         <h1 className="font-sans font-semibold text-sm">{title}</h1>
