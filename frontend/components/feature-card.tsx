@@ -37,7 +37,7 @@ function FeatureCard({ title, description, imageUrl }: FeatureCardProps) {
       />
       <div className="mt-4">
         <h1 className="font-sans font-semibold text-sm">{title}</h1>
-        <p className="mt-4 font-mono text-xs text-muted-foreground leading-relaxed">
+        <p className="mt-4 font-sans text-xs text-muted-foreground leading-relaxed">
           {description}
         </p>
       </div>

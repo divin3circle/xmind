@@ -18,30 +18,30 @@ function Footer() {
           <div className="flex items-center justify-between my-4 gap-4 md:gap-8">
             <div className="text-center flex flex-col items-center justify-center cursor-pointer">
               <IconBrandGithub size={28} className="text-muted-foreground" />
-              <p className="text-xs font-mono mt-2 text-muted-foreground">
+              <p className="text-xs font-sans mt-2 text-muted-foreground">
                 GitHub
               </p>
             </div>
             <div className="text-center flex flex-col items-center justify-center cursor-pointer">
               <IconBrandTwitter size={28} className="text-muted-foreground" />
-              <p className="text-xs font-mono mt-2 text-muted-foreground">
+              <p className="text-xs font-sans mt-2 text-muted-foreground">
                 Twitter
               </p>
             </div>
             <div className="text-center flex flex-col items-center justify-center cursor-pointer">
               <IconBrandDiscord size={28} className="text-muted-foreground" />
-              <p className="text-xs font-mono mt-2 text-muted-foreground">
+              <p className="text-xs font-sans mt-2 text-muted-foreground">
                 Discord
               </p>
             </div>
             <div className="text-center flex flex-col items-center justify-center cursor-pointer">
               <IconBrandTelegram size={28} className="text-muted-foreground" />
-              <p className="text-xs font-mono mt-2 text-muted-foreground">
+              <p className="text-xs font-sans mt-2 text-muted-foreground">
                 Telegram
               </p>
             </div>
           </div>
-          <h1 className="text-5xl lowercase font-mono font-bold text-green-500/40 absolute -bottom-4">
+          <h1 className="text-5xl lowercase font-sans font-bold text-green-500/40 absolute -bottom-4">
             The Bazaar
           </h1>
         </div>

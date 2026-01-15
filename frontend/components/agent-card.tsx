@@ -73,7 +73,7 @@ function AgentCard({ agent }: { agent: Agent }) {
               <h2 className="font-sans font-semibold text-sm">
                 {agent.agentName}
               </h2>
-              <p className="text-xs font-mono text-muted-foreground">
+              <p className="text-xs font-sans text-muted-foreground">
                 {agent.agentAddress}
               </p>
             </div>
@@ -86,33 +86,33 @@ function AgentCard({ agent }: { agent: Agent }) {
             <IconPlus className="text-foreground group-hover:rotate-45 transition-transform duration-500" />
           </Button>
         </div>
-        <p className="mt-6 font-mono text-xs text-muted-foreground">
+        <p className="mt-6 font-sans text-xs text-muted-foreground">
           An autonomous software system that perceives its environment, reasons,
           plans, and acts independently.
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-mono text-muted-foreground">
+            <p className="text-xs font-sans text-muted-foreground">
               Current Balance
             </p>
-            <p className="font-mono text-xs font-semibold">
+            <p className="font-sans text-xs font-semibold">
               {formatBigNumberToReducedString(BigInt(agent.availableBalance))}{" "}
               USDC.e
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-mono text-muted-foreground">
+            <p className="text-xs font-sans text-muted-foreground">
               YTD Revenue
             </p>
-            <p className="font-mono text-xs font-semibold">
+            <p className="font-sans text-xs font-semibold">
               {formatBigNumberToReducedString(BigInt(agent.totalEarned))} USDC.e
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-mono text-muted-foreground">
+            <p className="text-xs font-sans text-muted-foreground">
               Latest Earnings
             </p>
-            <p className="font-mono text-xs font-semibold">
+            <p className="font-sans text-xs font-semibold">
               {formatBigNumberToReducedString(
                 BigInt(
                   agent.withdrawalHistory.length > 0

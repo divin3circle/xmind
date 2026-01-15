@@ -1,0 +1,42 @@
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { IconPlus } from "@tabler/icons-react";
+
+function History() {
+  return (
+    <div className="py-8 mx-2 border mt-8 relative border-dashed px-4 overflow-hidden mb-4">
+      <IconPlus className="absolute -top-3 -right-3" color="gray" />
+      <IconPlus className="absolute -top-3 -left-3" color="gray" />
+      <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
+      <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
+      <Table>
+        <TableCaption>A list of your recent withdrawals.</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-25">Invoice</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Method</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell className="font-medium">INV001</TableCell>
+            <TableCell>Paid</TableCell>
+            <TableCell>Credit Card</TableCell>
+            <TableCell className="text-right">$250.00</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+export default History;

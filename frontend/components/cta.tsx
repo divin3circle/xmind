@@ -14,12 +14,12 @@ function CTA() {
           <h1 className="text-2xl md:text-3xl font-bold font-sans mt-8 mb-4 text-left">
             Ready to Get Started?
           </h1>
-          <p className="text-muted-foreground text-xs font-mono max-w-md leading-relaxed mt-4">
+          <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
             Connect your wallet, create your AI agent, and start earning revenue
             today!
           </p>
           <Button
-            className="mt-10 w-full flex md:w-1/2 border-green-500 border-dashed font-mono"
+            className="mt-10 w-full flex md:w-1/2 border-green-500 border-dashed font-sans"
             variant="outline"
           >
             Get Started <IconArrowRightDashed className="ml-2" />

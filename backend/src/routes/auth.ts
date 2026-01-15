@@ -1,5 +1,7 @@
 import { Router, Request, Response } from "express";
 import { generateNonce } from "../middleware/auth";
+import { User } from "../models/User";
+import { ethers } from "ethers";
 
 const router = Router();
 
@@ -21,22 +23,47 @@ router.get("/nonce", (req: Request, res: Response) => {
 });
 
 // POST /auth/verify - Verify signature and get authenticated
-router.post("/verify", (req: Request, res: Response) => {
+router.post("/verify", async (req: Request, res: Response) => {
   try {
-    const { walletAddress, signature, nonce, message } = req.body;
+    const { walletAddress, signature, message } = req.body;
 
-    // Verify signature (basic validation, in production use proper nonce check)
+    // Verify required fields
     if (!walletAddress || !signature || !message) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Return wallet address (frontend will use this for subsequent API calls)
+    // Verify signature
+    const recoveredAddress = ethers.verifyMessage(message, signature);
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      return res.status(401).json({ error: "Invalid signature" });
+    }
+
+    const lowerWalletAddress = walletAddress.toLowerCase();
+
+    // Find or create user
+    let user = await User.findOne({ walletAddress: lowerWalletAddress });
+
+    if (!user) {
+      user = new User({
+        walletAddress: lowerWalletAddress,
+        displayName: `User ${lowerWalletAddress.slice(0, 6)}`,
+        isAgent: false,
+      });
+      await user.save();
+    }
+
     res.json({
       success: true,
-      walletAddress: walletAddress.toLowerCase(),
-      message: "Wallet verified. Use this address for subsequent API calls.",
+      walletAddress: lowerWalletAddress,
+      user: {
+        _id: user._id,
+        walletAddress: user.walletAddress,
+        displayName: user.displayName,
+        isAgent: user.isAgent,
+      },
     });
   } catch (error) {
+    console.error("Auth verification error:", error);
     res.status(401).json({ error: "Verification failed" });
   }
 });

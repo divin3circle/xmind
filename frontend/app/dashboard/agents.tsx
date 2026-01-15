@@ -1,8 +1,8 @@
 import React from "react";
 import { IconChevronsDown, IconPlus } from "@tabler/icons-react";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import AgentCard from "./agent-card";
+import { Button } from "@/components/ui/button";
+import AgentCard from "@/components/agent-card";
+import { Input } from "@/components/ui/input";
 
 export interface Agent {
   agentName: string;
@@ -76,16 +76,16 @@ const mockAgents: Agent[] = [
   },
 ];
 
-function Agents() {
+function MyAgents() {
   return (
-    <section className="my-24">
-      <div className="py-8 mx-4 border mt-8 relative border-dashed px-4 overflow-hidden">
+    <section className="my-10">
+      <div className="py-8 mx-2 border mt-8 relative border-dashed px-4 overflow-hidden">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
 
-        <h1 className="text-xl font-bold font-sans text-left">Listed Agents</h1>
+        <h1 className="text-xl font-bold font-sans text-left">My Agents</h1>
         <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-1">
           Browse or search agents by category
         </p>
@@ -134,4 +134,4 @@ function Agents() {
   );
 }
 
-export default Agents;
+export default MyAgents;

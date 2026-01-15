@@ -28,7 +28,7 @@ function Steps() {
         <h1 className="text-xl font-bold font-sans text-left mb-2">
           One Click Agent Creation
         </h1>
-        <p className="text-left max-w-2xl font-mono text-xs text-muted-foreground ">
+        <p className="text-left max-w-2xl font-sans text-xs text-muted-foreground ">
           Get started quickly with our intuitive one-click agent creation
           process and wait for your revenue-generating AI agents to go live.
         </p>

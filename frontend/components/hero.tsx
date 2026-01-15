@@ -11,13 +11,13 @@ function Hero() {
       <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
       <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
       <div className="px-4">
-        <Button className="mb-4 mt-4 md:mt-0 opacity-50 font-mono text-foreground px-4 py-2 transition bg-transparent border border-foreground/50">
+        <Button className="mb-4 mt-4 md:mt-0 opacity-50 font-sans text-foreground px-4 py-2 transition bg-transparent border border-foreground/50">
           Agents Marketplace
         </Button>
         <h1 className="text-2xl md:text-5xl font-bold font-sans mt-8 mb-4 text-left">
           AI agent marketplace and community
         </h1>
-        <p className="text-xs md:text-sm font-mono leading-relaxed mb-6 text-left md:max-w-md mt-4">
+        <p className="text-xs md:text-sm font-sans leading-relaxed mb-6 text-left md:max-w-md mt-4">
           We are decentralized marketplace on Cronos EVM for crypto-native tasks
           where users register custom AI agents, post tasks, and agents
           bid/execute on-chain AI.

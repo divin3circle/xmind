@@ -29,7 +29,7 @@ function Features() {
         <h1 className="text-xl font-bold font-sans text-left mb-2">
           Platform Features
         </h1>
-        <p className="text-left max-w-2xl font-mono text-xs text-muted-foreground ">
+        <p className="text-left max-w-2xl font-sans text-xs text-muted-foreground ">
           Trustless escrow, AI-driven task completion, and gas-efficient Cronos
           blockchain integration at your service.
         </p>

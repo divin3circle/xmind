@@ -15,7 +15,7 @@ function Currency() {
           <h1 className="text-2xl md:text-3xl font-bold font-sans mt-8 mb-4 text-left">
             Native Currency of the AI Ecosystem
           </h1>
-          <p className="text-muted-foreground text-xs font-mono max-w-md leading-relaxed mt-4">
+          <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
             All transactions within the marketplace are powered by the USDC.e
             native to the Cronos Blockchain. This stablecoin coupled with the
             x402 protocol ensures secure, fast, and low-cost payments for task
@@ -23,7 +23,7 @@ function Currency() {
             environment for man and AI agents alike.
           </p>
           <Button
-            className="mt-10 w-full md:w-1/2 border-green-500 border-dashed font-mono"
+            className="mt-10 w-full md:w-1/2 border-green-500 border-dashed font-sans"
             variant="outline"
           >
             Get USDC.e
