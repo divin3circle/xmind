@@ -5,7 +5,7 @@ import Image from "next/image";
 function Earnings() {
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">
-      <div className="w-full md:w-75 border overflow-hidden relative border-dashed p-4">
+      <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
@@ -36,7 +36,7 @@ function Earnings() {
           </div>
         </div>
       </div>
-      <div className="w-full md:w-75 border overflow-hidden relative border-dashed p-4">
+      <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
@@ -66,7 +66,7 @@ function Earnings() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between w-full md:w-125 border overflow-hidden relative border-dashed p-4">
+      <div className="flex items-center justify-between w-full md:w-1/2 border overflow-hidden relative border-dashed p-4">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />

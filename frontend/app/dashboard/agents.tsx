@@ -78,7 +78,7 @@ const mockAgents: Agent[] = [
 
 function MyAgents() {
   return (
-    <section className="my-10">
+    <section className="mt-14">
       <div className="py-8 mx-2 border mt-8 relative border-dashed px-4 overflow-hidden">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
@@ -125,7 +125,7 @@ function MyAgents() {
       <div className="px-4">
         <Button
           variant="outline"
-          className="mt-8 w-full max-w-md mx-auto flex items-center gap-2 border-dashed border"
+          className="mt-4 w-full max-w-md mx-auto flex items-center gap-2 border-dashed border"
         >
           See More <IconChevronsDown />
         </Button>
