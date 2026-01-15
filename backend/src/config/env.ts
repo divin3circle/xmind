@@ -5,7 +5,7 @@ dotenv.config();
 export const config = {
   // Server
   NODE_ENV: process.env.NODE_ENV || "development",
-  PORT: parseInt(process.env.PORT || "3000", 10),
+  PORT: parseInt(process.env.PORT || "8080", 10),
 
   // MongoDB
   MONGODB_URI: process.env.MONGODB_URI || "mongodb://localhost:27017/bazaar",
