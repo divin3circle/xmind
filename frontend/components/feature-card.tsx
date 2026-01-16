@@ -5,10 +5,16 @@ import React from "react";
 interface FeatureCardProps {
   title: string;
   description: string;
+  tagline: string;
   imageUrl: string;
 }
 
-function FeatureCard({ title, description, imageUrl }: FeatureCardProps) {
+function FeatureCard({
+  title,
+  tagline,
+  description,
+  imageUrl,
+}: FeatureCardProps) {
   return (
     <div className="border border-dashed relative p-4 w-full flex flex-col justify-between items-center">
       <IconPlus
@@ -37,6 +43,9 @@ function FeatureCard({ title, description, imageUrl }: FeatureCardProps) {
       />
       <div className="mt-4">
         <h1 className="font-sans font-semibold text-sm">{title}</h1>
+        <h2 className="font-sans font-medium text-xs text-muted-foreground/50">
+          {tagline}
+        </h2>
         <p className="mt-4 font-sans text-xs text-muted-foreground leading-relaxed">
           {description}
         </p>

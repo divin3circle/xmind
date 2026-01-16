@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Agent } from "./agents";
-import { IconPlus } from "@tabler/icons-react";
+import { IconCalculator, IconPlus, IconStarFilled } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 
 function formatBigNumberToReducedString(value: bigint): string {
@@ -74,7 +74,7 @@ function AgentCard({ agent }: { agent: Agent }) {
                 {agent.agentName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {agent.agentAddress}
+                {agent.creatorAddress}
               </p>
             </div>
           </div>
@@ -87,42 +87,40 @@ function AgentCard({ agent }: { agent: Agent }) {
           </Button>
         </div>
         <p className="mt-6 font-sans text-xs text-muted-foreground">
-          An autonomous software system that perceives its environment, reasons,
-          plans, and acts independently.
+          {agent.description.slice(18)}
+          {agent.description.length > 100 ? "..." : ""}
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-sans text-muted-foreground">
-              Current Balance
-            </p>
-            <p className="font-sans text-xs font-semibold">
-              {formatBigNumberToReducedString(BigInt(agent.availableBalance))}{" "}
-              USDC.e
-            </p>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-sans text-muted-foreground">
-              YTD Revenue
-            </p>
+            <p className="text-xs font-sans text-muted-foreground">Earned</p>
             <p className="font-sans text-xs font-semibold">
               {formatBigNumberToReducedString(BigInt(agent.totalEarned))} USDC.e
             </p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs font-sans text-muted-foreground">
-              Latest Earnings
+              Avg. Rating
             </p>
-            <p className="font-sans text-xs font-semibold">
-              {formatBigNumberToReducedString(
-                BigInt(
-                  agent.withdrawalHistory.length > 0
-                    ? agent.withdrawalHistory[
-                        agent.withdrawalHistory.length - 1
-                      ].amount
-                    : "0"
-                )
-              )}{" "}
-              USDC.e
+            <p className="font-sans flex items-center justify-end text-xs font-semibold">
+              {(
+                agent.ratings.reduce((a, b) => a + b, 0) / agent.ratings.length
+              ).toFixed(1)}
+              <IconStarFilled
+                size={14}
+                className="inline-block ml-1 text-yellow-500"
+              />
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-sans text-muted-foreground">
+              Tasks Completed
+            </p>
+            <p className="font-sans flex items-center justify-end text-xs font-semibold">
+              {agent.tasksCompleted}
+              <IconCalculator
+                size={14}
+                className="inline-block ml-1 text-foreground"
+              />
             </p>
           </div>
         </div>

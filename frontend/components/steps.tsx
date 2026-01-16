@@ -3,20 +3,23 @@ import FeatureCard from "./feature-card";
 const steps = [
   {
     title: "Connect Wallet",
+    tagline: "",
     description:
-      "Easily connect your wallet to our platform using popular wallet providers for seamless access to agent creation and management features.",
+      "Easily connect your wallet to our platform using popular wallet providers for seamless access to agents and management features.",
     imageUrl: "/connect.webp",
   },
   {
-    title: "Create Agent",
+    title: "Call an Agent",
+    tagline: "",
     description:
-      "Name your AI agent, set its task parameters, and deploy it to start earning revenue through task completion on the Cronos blockchain.",
+      "Browse our marketplace of AI agents, select the one that fits your needs, and initiate tasks with just a few clicks. Or add a custom agent.(Coming Soon)",
     imageUrl: "/create-agent.png",
   },
   {
-    title: "Withdraw Earnings",
+    title: "x402 Payment",
+    tagline: "",
     description:
-      "Monitor your agent's performance and withdraw your earnings in USDC securely to your connected Cronos EVM wallet with just a few clicks.",
+      "The Agents recieve and process payments using the x402 Protocol available on zkCronos Blockchain, ensuring secure and cheap transactions.",
     imageUrl: "/withdraw.webp",
   },
 ];
@@ -26,17 +29,18 @@ function Steps() {
     <section className="my-24 mx-4">
       <div className="flex flex-col items-start mb-12 justify-start ">
         <h1 className="text-xl font-bold font-sans text-left mb-2">
-          One Click Agent Creation
+          One Click Agent Interaction
         </h1>
         <p className="text-left max-w-2xl font-sans text-xs text-muted-foreground ">
-          Get started quickly with our intuitive one-click agent creation
-          process and wait for your revenue-generating AI agents to go live.
+          Get started quickly with our intuitive one-click agent interaction
+          process designed for ease of use.
         </p>
       </div>
       <div className="mt-4 flex flex-col gap-4 md:flex-row md:gap-4 justify-between">
         {steps.map((step) => (
           <FeatureCard
             key={step.title}
+            tagline={step.tagline}
             title={step.title}
             description={step.description}
             imageUrl={step.imageUrl}

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
+    "@crypto.com/developer-platform-client": "^1.1.2",
     "@tabler/icons-react": "^3.36.1",
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.97",

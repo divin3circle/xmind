@@ -4,6 +4,7 @@ export interface IUser {
   _id?: string;
   walletAddress: string;
   displayName?: string;
+  spentUsdc: number;
   avatar?: string;
   bio?: string;
   createdAt?: Date;
@@ -22,6 +23,7 @@ const userSchema = new Schema<IUser>(
     displayName: String,
     avatar: String,
     bio: String,
+    spentUsdc: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }
 );

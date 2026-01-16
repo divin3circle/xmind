@@ -10,10 +10,10 @@ import Link from "next/link";
 function DashboardNavbar() {
   return (
     <div className="flex items-center justify-between mx-2 mt-4">
-      <div className="flex items-center gap-2">
+      <Link href="/" className="flex items-center gap-2">
         <IconBrandDatabricks size={32} color="green" />
-        <h1 className="text-2xl font-semibold lowercase font-sans">bazaar</h1>
-      </div>
+        <h1 className="text-2xl font-semibold lowercase font-sans">xMind</h1>
+      </Link>
       <div className="flex items-center gap-4">
         <Link
           href={"/profile"}

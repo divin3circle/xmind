@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       user = new User({
         walletAddress: lowerWalletAddress,
         displayName: `User ${lowerWalletAddress.slice(0, 6)}`,
-        isAgent: false,
+        spentUsdc: 0,
       });
       await user.save();
     }
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
         _id: user._id,
         walletAddress: user.walletAddress,
         displayName: user.displayName,
+        spentUsdc: user.spentUsdc,
       },
     });
   } catch (error) {

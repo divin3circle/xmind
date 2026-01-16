@@ -17,7 +17,7 @@ function GetStarted() {
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="flex items-center gap-2">
           <IconBrandDatabricks size={32} color="green" />
-          <h1 className="text-2xl font-bold font-sans text-left">bazaar</h1>
+          <h1 className="text-2xl font-bold font-sans text-left">xMind</h1>
         </div>
         <p className="text-muted-foreground font-sans text-xs max-w-xs leading-relaxed">
           Create and Deploy Agents that perform tasks autonomously on Cronos.
@@ -44,7 +44,7 @@ function GetStarted() {
         </div>
       </div>
       <p className="absolute bottom-1 text-xs text-muted-foreground font-sans font-light">
-        all rights reserved &copy; bazaar 2024
+        all rights reserved &copy; xMind 2024
       </p>
     </div>
   );

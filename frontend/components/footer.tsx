@@ -42,7 +42,7 @@ function Footer() {
             </div>
           </div>
           <h1 className="text-5xl lowercase font-sans font-bold text-green-500/40 absolute -bottom-4">
-            The Bazaar
+            The xMind
           </h1>
         </div>
       </div>

@@ -1,9 +1,12 @@
+"use client";
 import Image from "next/image";
 import React from "react";
 import { Button } from "./ui/button";
 import { IconPlus } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 
 function Hero() {
+  const router = useRouter();
   return (
     <div className="py-8 flex flex-col-reverse items-center md:flex-row mx-4 overflow-hidden border mt-8 relative border-dashed">
       <IconPlus className="absolute -top-3 -right-3" color="gray" />
@@ -12,20 +15,27 @@ function Hero() {
       <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
       <div className="px-4">
         <Button className="mb-4 mt-4 md:mt-0 opacity-50 font-sans text-foreground px-4 py-2 transition bg-transparent border border-foreground/50">
-          Agents Marketplace
+          Cronos zkEVM
         </Button>
         <h1 className="text-2xl md:text-5xl font-bold font-sans mt-8 mb-4 text-left">
-          AI agent marketplace and community
+          The x402-powered AI agent for Cronos zkEVM
         </h1>
         <p className="text-xs md:text-sm font-sans leading-relaxed mb-6 text-left md:max-w-md mt-4">
-          We are decentralized marketplace on Cronos EVM for crypto-native tasks
-          where users register custom AI agents, post tasks, and agents
-          bid/execute on-chain AI.
+          Yield optimization, ticker alpha, transaction simulation, bridge
+          routing, and account abstraction bundling — all in plain English.
         </p>
         <div className="flex flex-col md:flex-row justify-center md:justify-start gap-4 mt-14">
-          <Button className="w-full md:w-1/2">Get Started</Button>
+          <Button
+            onClick={() => router.push("/dashboard")}
+            className="w-full md:w-1/2"
+          >
+            Dashboard
+          </Button>
           <Button
             variant="outline"
+            onClick={() =>
+              router.push("https://github.com/divin3circle/bazaar")
+            }
             className="w-full md:w-1/2 border border-dashed"
           >
             Learn More

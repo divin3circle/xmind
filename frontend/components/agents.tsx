@@ -5,74 +5,62 @@ import { Button } from "./ui/button";
 import AgentCard from "./agent-card";
 
 export interface Agent {
+  _id?: string;
   agentName: string;
   image: string;
   creatorAddress: string;
-  agentAddress: string;
+  description: string;
+  tasksCompleted: number;
   totalEarned: string;
-  totalWithdrawn: string;
-  availableBalance: string;
-  registrationFeePaid: string;
-  registrationFeePaidTxHash?: string;
-  registrationPaidAt?: string;
-  lastWithdrawalAt?: string;
-  withdrawalHistory: {
-    amount: string;
-    txHash?: string;
-    withdrawnAt?: string;
-  }[];
+  ratings: number[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const mockAgents: Agent[] = [
+export const mockAgents: Agent[] = [
   {
+    _id: "1",
     agentName: "Zephyr Ops",
     image: "/ai-agent2.webp",
     creatorAddress: "0x9f2c...a1b3",
-    agentAddress: "0x8a7d...fe42",
+    description:
+      "Zephyr helps you executes the transaction in a safe sandbox, and returns a plain-English summary with clear warnings.",
     totalEarned: "12500000000000",
-    totalWithdrawn: "7500000000000",
-    availableBalance: "5000000000000",
-    registrationFeePaid: "1000000000000",
-    registrationFeePaidTxHash: "0xfee1deadbeef",
-    registrationPaidAt: "2025-12-10T12:30:00Z",
-    lastWithdrawalAt: "2025-12-20T09:15:00Z",
-    withdrawalHistory: [
-      {
-        amount: "5000000000000",
-        txHash: "0xbeadfeed",
-        withdrawnAt: "2025-12-15T08:00:00Z",
-      },
-      {
-        amount: "2500000000000",
-        txHash: "0xdecafbad",
-        withdrawnAt: "2025-12-20T09:15:00Z",
-      },
-    ],
+    tasksCompleted: 150,
+    ratings: [5, 4, 5, 5, 4],
   },
   {
+    _id: "2",
     agentName: "Aurora Nexus",
     creatorAddress: "0x1c3d...b4e6",
+    description:
+      "Aurora scans pools and farms analyzes APY, TVL, risks, and short-term trends, then ranks the top 5 yield opportunities.",
     image: "/ai-agent.jpg",
-    agentAddress: "0x4f6a...c9d0",
-    totalEarned: "9800000000000",
-    totalWithdrawn: "4800000000000",
-    availableBalance: "5000000000000",
-    registrationFeePaid: "1000000000000",
-    registrationFeePaidTxHash: "0xba5eba11",
-    registrationPaidAt: "2025-11-05T15:45:00Z",
-    lastWithdrawalAt: "2025-12-18T10:05:00Z",
-    withdrawalHistory: [
-      {
-        amount: "3000000000000",
-        txHash: "0xabc123",
-        withdrawnAt: "2025-12-01T14:20:00Z",
-      },
-      {
-        amount: "1800000000000",
-        txHash: "0xdef456",
-        withdrawnAt: "2025-12-18T10:05:00Z",
-      },
-    ],
+    totalEarned: "800000000000",
+    tasksCompleted: 95,
+    ratings: [4, 4, 5, 3, 4],
+  },
+  {
+    _id: "3",
+    agentName: "Zk Staks",
+    creatorAddress: "0x2e5f...d8c2",
+    description:
+      "Zk Staks uses natural language to generate the perfect ERC-4337 UserOperation bundle (approve + swap + stake in one signature).",
+    image: "/staks.jpeg",
+    totalEarned: "6500000000000",
+    tasksCompleted: 120,
+    ratings: [5, 5, 4, 5, 5],
+  },
+  {
+    _id: "4",
+    agentName: "Omni",
+    creatorAddress: "0x7a4b...e3f9",
+    description:
+      "Omni checks real-time liquidity depth on official bridges, third-party bridges and CEX withdrawal fees returning a route that saves you the most on slippage and gas.",
+    image: "/omni.jpeg",
+    totalEarned: "7200000000000",
+    tasksCompleted: 135,
+    ratings: [5, 4, 5, 4, 5],
   },
 ];
 
@@ -85,9 +73,12 @@ function Agents() {
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
 
-        <h1 className="text-xl font-bold font-sans text-left">Listed Agents</h1>
+        <h1 className="text-xl font-bold font-sans text-left">
+          Available Agents
+        </h1>
         <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-1">
-          Browse or search agents by category
+          Don&apos;t see an agent that fits your needs? Agent creation coming
+          soon
         </p>
         <div className="flex items-center justify-between flex-col md:flex-row mt-4">
           <Input
@@ -118,7 +109,7 @@ function Agents() {
 
         <div className="flex flex-wrap gap-4 mt-8 ">
           {mockAgents.map((agent) => (
-            <AgentCard key={agent.agentAddress} agent={agent} />
+            <AgentCard key={agent._id} agent={agent} />
           ))}
         </div>
       </div>

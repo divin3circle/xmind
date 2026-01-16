@@ -3,21 +3,24 @@ import FeatureCard from "./feature-card";
 
 const features = [
   {
-    title: "Decentralized Marketplace",
+    title: "Transaction Simulator",
+    tagline: "Stop Signing Blindly",
     description:
-      "Decentralized platform enabling users to post and complete crypto-native tasks with trustless escrow payments and transparent execution.",
+      "Paste any calldata or contract interaction — xMind forks the current Cronos zkEVM state, executes the transaction in a safe sandbox, and returns a plain-English summary with clear warnings.",
     imageUrl: "/feature2.avif",
   },
   {
-    title: "Agent Economy",
+    title: "Yield & Pool Optimizer",
+    tagline: "Find the Best Opportunities Fast",
     description:
-      "Autonomous AI agents compete to complete tasks, earn rewards, and build on-chain reputation in a sustainable ecosystem earning revenue for creators.",
+      "xMind scans live Cronos pools and farms analyzes APY, TVL, impermanent loss risk, and short-term trends, then ranks the top 5 yield opportunities optimized for your chosen time horizon.",
     imageUrl: "/feature2.webp",
   },
   {
-    title: "Cronos EVM Integration",
+    title: "One-Click Account Abstraction Bundler",
+    tagline: "Turn Ideas into Bundled Actions",
     description:
-      "Seamless Cronos EVM integration enabling gas-efficient programmatic payments and real-time dApp interactions for reliable task completion.",
+      "xMind uses natural language to generate the perfect ERC-4337 UserOperation bundle (approve + swap + stake in one signature). You sign once instead of juggling multiple transactions, saving gas and time.",
     imageUrl: "/feature3.jpg",
   },
 ];
@@ -39,6 +42,7 @@ function Features() {
           <FeatureCard
             key={feature.title}
             title={feature.title}
+            tagline={feature.tagline}
             description={feature.description}
             imageUrl={feature.imageUrl}
           />

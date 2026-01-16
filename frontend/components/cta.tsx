@@ -1,8 +1,11 @@
+"use client";
 import { IconArrowRightDashed, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
 
 function CTA() {
+  const router = useRouter();
   return (
     <section className="my-24">
       <div className="py-8 flex flex-col-reverse overflow-hidden items-center md:flex-row mx-4 justify-between border mt-8 relative border-dashed px-4">
@@ -15,10 +18,12 @@ function CTA() {
             Ready to Get Started?
           </h1>
           <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
-            Connect your wallet, create your AI agent, and start earning revenue
-            today!
+            Connect your wallet, choose an agent, and make your Web3 life easier
           </p>
           <Button
+            onClick={() => {
+              router.push("/start");
+            }}
             className="mt-10 w-full flex md:w-1/2 border-green-500 border-dashed font-sans"
             variant="outline"
           >
