@@ -3,29 +3,31 @@ import { signMessage } from "thirdweb/utils";
 import { createWallet } from "thirdweb/wallets";
 
 interface AuthResponse {
-  token: string;
+  success: boolean;
   walletAddress: string;
+  user: {
+    _id: string;
+    walletAddress: string;
+    displayName: string;
+  };
 }
 
 interface NonceResponse {
   nonce: string;
+  expiresAt: string;
+  message: string;
 }
 
 export class AuthService {
-  private backendUrl: string;
+  private backendUrl = "/api/auth";
   private tokenKey = "bazaar_auth_token";
   private walletAddressKey = "bazaar_wallet_address";
 
-  constructor(backendUrl: string = process.env.NEXT_PUBLIC_BACKEND_URL || "") {
-    if (!backendUrl) {
-      throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined");
-    }
-    this.backendUrl = backendUrl;
-  }
+  constructor() {}
 
   async getNonce(): Promise<string> {
     try {
-      const response = await fetch(`${this.backendUrl}/auth/nonce`, {
+      const response = await fetch(this.backendUrl, {
         method: "GET",
       });
 
@@ -49,13 +51,13 @@ export class AuthService {
       });
       const nonce = await this.getNonce();
 
-      const message = `Sign this message to authenticate: ${nonce}`;
+      const message = `Sign this message with your wallet to authenticate:\n\nNonce: ${nonce}`;
       const signature = await signMessage({
         account,
         message,
       });
 
-      const response = await fetch(`${this.backendUrl}/auth/verify`, {
+      const response = await fetch(this.backendUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,8 +75,9 @@ export class AuthService {
 
       const data = (await response.json()) as AuthResponse;
 
-      this.setToken(data.token);
+      // Store wallet address and user info (token can be optional or stored from response)
       this.setWalletAddress(data.walletAddress);
+      localStorage.setItem("bazaar_user", JSON.stringify(data.user));
 
       return data;
     } catch (error) {

@@ -1,9 +1,0 @@
-{
-  "network": "cronosTestnet",
-  "deployer": "0x7ae55d5648f2AA425635d8C83A2c23de25813Fea",
-  "usdc": "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0",
-  "reputation": "0x25B6BB86c7a6495c79Cb4a7a66a1c211849a2D3C",
-  "escrow": "0xF107FC3c048F6bF152314E2561A38129777d35d3",
-  "blockNumber": 67307462,
-  "timestamp": "2026-01-12T07:57:25.208Z"
-}
