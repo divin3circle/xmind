@@ -16,7 +16,7 @@ function MyAgents() {
 
         <h1 className="text-xl font-bold font-sans text-left">My Agents</h1>
         <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-1">
-          Browse or search agents by category
+          You have no agents deployed yet. See available agents below.
         </p>
         <div className="flex items-center justify-between flex-col md:flex-row mt-4">
           <Input

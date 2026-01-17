@@ -11,8 +11,19 @@ function Earnings() {
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="flex w-full items-center justify-between">
-          <h1 className="font-sans font-semibold text-sm">Earnings</h1>
-          <Button className="font-sans border-dashed">+17.8%</Button>
+          <h1 className="font-sans font-semibold text-sm">Balance</h1>
+          <div className="flex items-center gap-1">
+            <Image
+              src={"/usdc.png"}
+              alt="USDC Logo"
+              width={20}
+              height={20}
+              className="rounded-full"
+            />
+            <p className="font-sans font-semibold text-muted-foreground text-xs">
+              USDC.e
+            </p>
+          </div>
         </div>
         <div className="mt-4">
           <h1 className="font-sans text-foreground/90 font-bold text-4xl text-center">
@@ -20,10 +31,10 @@ function Earnings() {
           </h1>
           <div className="flex w-full mt-4 items-center justify-between">
             <h1 className="font-sans text-xs font-semibold text-muted-foreground">
-              Total Earned
+              Tokens
             </h1>
             <p className="font-sans text-xs font-semibold text-muted-foreground">
-              $14,686.97
+              5,432.12 USDC.e
             </p>
           </div>
           <div className="flex w-full mt-2 items-center justify-between">
@@ -42,7 +53,7 @@ function Earnings() {
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="flex w-full items-center justify-between py-2">
-          <h1 className="font-sans font-semibold text-sm">Withdrawals</h1>
+          <h1 className="font-sans font-semibold text-sm">Spending</h1>
         </div>
         <div className="mt-4">
           <h1 className="font-sans text-foreground/90 font-bold text-4xl text-center">
@@ -50,10 +61,10 @@ function Earnings() {
           </h1>
           <div className="flex w-full mt-4 items-center justify-between">
             <h1 className="font-sans text-xs font-semibold text-muted-foreground">
-              Total Withdrawn
+              Spent Tokens
             </h1>
             <p className="font-sans text-xs font-semibold text-muted-foreground">
-              $4,686.97
+              4,686.97 USDC.e
             </p>
           </div>
           <div className="flex w-full mt-2 items-center justify-between">
@@ -77,7 +88,17 @@ function Earnings() {
             Create and agent for only 45 USDC and start earning rewards as they
             complete tasks on Cronos.
           </p>
-          <Button className="mt-4 font-sans border-dashed">Create Agent</Button>
+          <Button
+            disabled
+            className="mt-4 disabled:cursor-not-allowed font-sans border-dashed"
+          >
+            Create Agent
+          </Button>
+          <p className="text-xs flex items-center justify-start mt-2 gap-1 text-muted-foreground">
+            <span className="text-base">[</span>
+            Cooming Soon
+            <span className="text-base">]</span>
+          </p>
         </div>
         <Image
           src={"/currency.webp"}
