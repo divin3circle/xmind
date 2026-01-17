@@ -17,7 +17,11 @@ function Connect() {
   const path = usePathname();
 
   useEffect(() => {
-    if (authService.isAuthenticated() && path !== "/agents") {
+    if (
+      authService.isAuthenticated() &&
+      path !== "/agents" &&
+      !path.includes("chat")
+    ) {
       router.push("/dashboard");
     }
   }, [router, path]);

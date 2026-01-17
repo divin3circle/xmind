@@ -9,6 +9,7 @@ export interface Agent {
   agentName: string;
   image: string;
   creatorAddress: string;
+  tagline?: string;
   description: string;
   tasksCompleted: number;
   totalEarned: string;
@@ -21,6 +22,7 @@ export const mockAgents: Agent[] = [
   {
     _id: "1",
     agentName: "Zephyr Ops",
+    tagline: "Secure Transaction Executor",
     image: "/ai-agent2.webp",
     creatorAddress: "0x9f2c...a1b3",
     description:
@@ -32,6 +34,7 @@ export const mockAgents: Agent[] = [
   {
     _id: "2",
     agentName: "Aurora Nexus",
+    tagline: "Yield Opportunity Analyzer",
     creatorAddress: "0x1c3d...b4e6",
     description:
       "Aurora scans pools and farms analyzes APY, TVL, risks, and short-term trends, then ranks the top 5 yield opportunities.",
@@ -43,6 +46,7 @@ export const mockAgents: Agent[] = [
   {
     _id: "3",
     agentName: "Zk Staks",
+    tagline: "ERC-4337 UserOperation Generator",
     creatorAddress: "0x2e5f...d8c2",
     description:
       "Zk Staks uses natural language to generate the perfect ERC-4337 UserOperation bundle (approve + swap + stake in one signature).",
@@ -54,6 +58,7 @@ export const mockAgents: Agent[] = [
   {
     _id: "4",
     agentName: "Omni",
+    tagline: "Cross-Chain Liquidity Optimizer",
     creatorAddress: "0x7a4b...e3f9",
     description:
       "Omni checks real-time liquidity depth on official bridges, third-party bridges and CEX withdrawal fees returning a route that saves you the most on slippage and gas.",
