@@ -1,8 +1,16 @@
+import config from "@/config/env";
 import { createThirdwebClient } from "thirdweb";
 
-const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!;
-const secretKey = process.env.THIRDWEB_SECRET_KEY!;
+const clientId = config.NEXT_PUBLIC_THIRDWEB_CLIENT_ID;
 
-export const client = createThirdwebClient(
-  secretKey ? { secretKey } : { clientId }
-);
+if (!clientId) {
+  throw new Error(
+    "NEXT_PUBLIC_THIRDWEB_CLIENT_ID is not defined in environment variables",
+  );
+}
+
+// thirdweb client for browser-side usage only needs the public clientId; the
+// secret key must stay server-side to avoid leaking credentials.
+export const client = createThirdwebClient({
+  clientId,
+});

@@ -15,14 +15,14 @@ interface Network {
 }
 
 const networks: Network[] = [
-  { name: "Cronos zkEVM Testnet", chainId: 338 },
-  { name: "Cronos zkEVM Mainnet", chainId: 25 },
+  { name: "Cronos Testnet", chainId: 338 },
+  { name: "Cronos Mainnet", chainId: 25 },
 ];
 
 function NetworkToggle() {
   const [selectedNetwork, setSelectedNetwork] = React.useState<Network>({
-    name: "Cronos zkEVM Testnet",
-    chainId: 338,
+    name: "Cronos Mainnet",
+    chainId: 25,
   });
   return (
     <Popover>
