@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     console.error("Nonce generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate nonce" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
     const validation = authVerifySchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: validation.error.errors },
-        { status: 400 }
+        { error: "Validation failed", details: validation.error },
+        { status: 400 },
       );
     }
 
@@ -43,13 +43,13 @@ export async function POST(req: NextRequest) {
     const verificationResult = await verifyWalletSignature(
       walletAddress,
       signature,
-      message
+      message,
     );
 
     if (!verificationResult.success) {
       return NextResponse.json(
         { error: verificationResult.error || "Invalid signature" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
