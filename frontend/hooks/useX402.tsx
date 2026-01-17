@@ -33,7 +33,12 @@ interface PaymentRequirements {
 }
 
 interface UseX402Return {
-  payForResource: (resourceUrl: string) => Promise<any>;
+  payForResource: (resource: {
+    resourceUrl: string;
+    message: string;
+    agentId: string;
+    address: string;
+  }) => Promise<any>;
   isPending: boolean;
   error: Error | null;
   isError: boolean;
@@ -49,7 +54,17 @@ export function useX402(): UseX402Return {
   const [lastResponse, setLastResponse] = useState<any>(null);
 
   const payForResource = useCallback(
-    async (resourceUrl: string): Promise<any> => {
+    async ({
+      resourceUrl,
+      message,
+      agentId,
+      address,
+    }: {
+      resourceUrl: string;
+      message: string;
+      agentId: string;
+      address: string;
+    }): Promise<any> => {
       setIsPending(true);
       setError(null);
       setIsError(false);
@@ -59,7 +74,11 @@ export function useX402(): UseX402Return {
       try {
         let initialResponse: any;
         try {
-          const response = await axios.get(resourceUrl);
+          const response = await axios.post(resourceUrl, {
+            message,
+            agentId,
+            userAddress: address,
+          });
           initialResponse = { status: response.status, data: response.data };
         } catch (err: any) {
           initialResponse = {
@@ -101,9 +120,13 @@ export function useX402(): UseX402Return {
           userAddress,
         });
 
-        const paidResponse = await axios.get(resourceUrl, {
-          headers: { "X-PAYMENT": paymentHeader },
-        });
+        const paidResponse = await axios.post(
+          resourceUrl,
+          { message, agentId, userAddress },
+          {
+            headers: { "X-PAYMENT": paymentHeader },
+          },
+        );
 
         setIsSuccess(true);
         setLastResponse(paidResponse.data);

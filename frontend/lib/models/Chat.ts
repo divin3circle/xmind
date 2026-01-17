@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface IChat {
   _id?: string;
@@ -28,4 +28,4 @@ const chatSchema = new Schema<IChat>(
   { timestamps: true },
 );
 
-export const Chat = model<IChat>("Chat", chatSchema);
+export const Chat = models.Chat || model<IChat>("Chat", chatSchema);

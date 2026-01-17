@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface IAgent {
   _id?: string;
@@ -28,7 +28,7 @@ const agentSchema = new Schema<IAgent>(
     ratings: { type: [Number], required: true, default: [] },
     description: { type: String, required: true, default: "" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const Agent = model<IAgent>("Agent", agentSchema);
+export const Agent = models.Agent || model<IAgent>("Agent", agentSchema);

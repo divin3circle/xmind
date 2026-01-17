@@ -10,4 +10,11 @@ export const authVerifySchema = z.object({
   message: z.string().min(1, "Message is required"),
 });
 
+export const chatVerifySchema = z.object({
+  message: z.string().min(1, "Message is required"),
+  agentId: z.string().min(1, "Agent ID is required"),
+  userAddress: walletAddressSchema,
+});
+
 export type AuthVerifyInput = z.infer<typeof authVerifySchema>;
+export type ChatVerifyInput = z.infer<typeof chatVerifySchema>;

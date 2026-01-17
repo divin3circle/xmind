@@ -7,6 +7,8 @@ import React from "react";
 import { IconSend } from "@tabler/icons-react";
 import Image from "next/image";
 import { useX402 } from "@/hooks/useX402";
+import { useActiveWallet } from "thirdweb/react";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -25,6 +27,7 @@ function WelcomeChat({ id }: { id: string }) {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { payForResource, isPending, error, isError } = useX402();
+  const activeWallet = useActiveWallet();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,9 +37,13 @@ function WelcomeChat({ id }: { id: string }) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSendMessage = async (content?: string) => {
+  const handleSendMessage = async (content: string) => {
     const messageToSend = content || message.trim();
     if (!messageToSend) return;
+    if (!activeWallet) {
+      toast.error("Please connect your wallet to proceed.");
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -51,7 +58,12 @@ function WelcomeChat({ id }: { id: string }) {
     setIsTyping(true);
 
     try {
-      const data = await payForResource("/api/agent");
+      const data = await payForResource({
+        resourceUrl: `/api/agent`,
+        message: messageToSend,
+        agentId: id,
+        address: activeWallet?.getAccount()?.address || "",
+      });
       const premiumContent =
         data?.data?.premiumContent || JSON.stringify(data?.data || data);
 
@@ -68,15 +80,6 @@ function WelcomeChat({ id }: { id: string }) {
     } finally {
       setIsTyping(false);
     }
-  };
-
-  const handleSampleClick = (sample: string) => {
-    setMessage(sample);
-    handleSendMessage(sample);
-  };
-
-  const handleApiCall = async () => {
-    await handleSendMessage();
   };
 
   if (!agent) {
@@ -170,18 +173,18 @@ function WelcomeChat({ id }: { id: string }) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleSendMessage();
+                    handleSendMessage(message.trim());
                   }
                 }}
               />
             </div>
             <Button
-              onClick={() => handleSendMessage()}
+              onClick={() => handleSendMessage(message.trim())}
               disabled={!message.trim()}
               variant={message.trim().length === 0 ? "outline" : "default"}
-              className="disabled:border-dashed border font-sans h-12 disabled:text-muted-foreground "
+              className="disabled:border-dashed border font-sans h-12 w-12 disabled:text-muted-foreground "
             >
-              <IconSend className="w-4 h-4" />
+              <IconSend size={28} className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -227,7 +230,7 @@ function WelcomeChat({ id }: { id: string }) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSendMessage();
+                handleSendMessage(message.trim());
               }
             }}
           />
@@ -240,7 +243,7 @@ function WelcomeChat({ id }: { id: string }) {
           }
           disabled={message.trim().length === 0 || isPending || isTyping}
           onClick={() => {
-            handleApiCall();
+            handleSendMessage(message);
           }}
           className="disabled:border-dashed border font-sans mb-4 mt-2 w-full disabled:text-muted-foreground "
         >
@@ -254,7 +257,7 @@ function WelcomeChat({ id }: { id: string }) {
           {samples.map((sample, index) => (
             <div
               key={index}
-              onClick={() => handleSampleClick(sample)}
+              onClick={() => handleSendMessage(sample)}
               className="border border-dashed p-4 mb-4 cursor-pointer hover:bg-green-500/10 transition-all duration-300"
             >
               <h2 className="font-sans font-semibold mb-2">

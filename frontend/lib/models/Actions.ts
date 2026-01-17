@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface IAction {
   _id?: string;
@@ -20,7 +20,7 @@ const actionSchema = new Schema<IAction>(
     },
     fees: { type: Number, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const Action = model<IAction>("Action", actionSchema);
+export const Action = models.Action || model<IAction>("Action", actionSchema);
