@@ -7,19 +7,20 @@ import { client } from "@/lib/client";
 import { toast } from "sonner";
 import authService from "@/services/authService";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 function Connect() {
   const { connect, isConnecting, error } = useConnect();
   const activeWallet = useActiveWallet();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const router = useRouter();
+  const path = usePathname();
 
   useEffect(() => {
-    if (authService.isAuthenticated()) {
+    if (authService.isAuthenticated() && path !== "/agents") {
       router.push("/dashboard");
     }
-  }, [router]);
+  }, [router, path]);
 
   const handleAuthentication = async () => {
     if (!activeWallet) return;
@@ -37,7 +38,7 @@ function Connect() {
       router.push("/dashboard");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Authentication failed"
+        error instanceof Error ? error.message : "Authentication failed",
       );
     } finally {
       setIsAuthenticating(false);

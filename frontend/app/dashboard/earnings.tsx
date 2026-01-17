@@ -96,7 +96,7 @@ function Earnings() {
           </Button>
           <p className="text-xs flex items-center justify-start mt-2 gap-1 text-muted-foreground">
             <span className="text-base">[</span>
-            Cooming Soon
+            Coming Soon
             <span className="text-base">]</span>
           </p>
         </div>
