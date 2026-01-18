@@ -10,6 +10,44 @@ import { useX402 } from "@/hooks/useX402";
 import { useActiveWallet } from "thirdweb/react";
 import { toast } from "sonner";
 
+// Format message with markdown-like syntax
+const formatMessage = (content: string) => {
+  const lines = content.split("\n");
+  return lines.map((line, idx) => {
+    // Handle bullet points
+    if (line.trim().startsWith("* ") || line.trim().startsWith("- ")) {
+      const bulletContent = line.replace(/^[\s]*[*-]\s/, "");
+      return (
+        <div key={idx} className="flex gap-2 ml-2 my-1">
+          <span className="text-muted-foreground">•</span>
+          <span className="flex-1">{parseBold(bulletContent)}</span>
+        </div>
+      );
+    }
+    // Handle bold text with **
+    return (
+      <div key={idx} className={line.trim() ? "my-1" : "my-0.5"}>
+        {parseBold(line)}
+      </div>
+    );
+  });
+};
+
+// Parse bold text marked with **
+const parseBold = (text: string) => {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <strong key={i} className="font-semibold">
+          {part}
+        </strong>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
+
 interface Message {
   id: string;
   role: "agent" | "user";
@@ -132,13 +170,17 @@ function WelcomeChat({ id }: { id: string }) {
               }`}
             >
               <div
-                className={`max-w-[75%] border border-dashed p-3 ${
+                className={`max-w-[75%] border border-dashed p-3 wrap-break-word overflow-wrap-anywhere ${
                   msg.role === "user"
                     ? "bg-green-500/10 border-green-500/30"
                     : "bg-muted/50"
                 }`}
               >
-                <p className="text-sm font-sans">{msg.content}</p>
+                <div className="text-xs md:text-sm font-sans wrap-break-word overflow-hidden">
+                  {msg.role === "agent"
+                    ? formatMessage(msg.content)
+                    : msg.content}
+                </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {msg.timestamp.toLocaleTimeString([], {
                     hour: "2-digit",
