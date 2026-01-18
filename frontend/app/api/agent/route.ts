@@ -27,6 +27,20 @@ export async function POST(request: Request) {
 
   const { message, agentId, userAddress } = validation.data;
 
+  if (!SELLER_WALLET || !USDCE_CONTRACT) {
+    console.error(
+      "Missing SELLER_WALLET or NEXT_PUBLIC_PAYMENT_TOKEN_ADDRESS env vars",
+    );
+    return Response.json(
+      {
+        error: "Server misconfiguration",
+        details:
+          "Payment receiver or asset is not configured. Please set SELLER_WALLET and NEXT_PUBLIC_PAYMENT_TOKEN_ADDRESS.",
+      },
+      { status: 500 },
+    );
+  }
+
   if (!paymentHeader) {
     return Response.json(
       {
@@ -97,7 +111,6 @@ export async function POST(request: Request) {
 
     if (settleRes.data.event === "payment.settled") {
       try {
-        // Connect to MongoDB and fetch chat history
         await dbConnect();
         const lowerId = agentId.toLowerCase().trim();
         const userAddressLower = userAddress.toLowerCase().trim();
@@ -107,11 +120,9 @@ export async function POST(request: Request) {
           userAddress: userAddressLower,
         });
 
-        // Build conversation history for context
         const conversationHistory = [];
 
         if (chat && chat.messages && chat.messages.length > 0) {
-          // Get last 5 messages (or fewer if not available)
           const recentMessages = chat.messages.slice(-5);
 
           for (const msg of recentMessages) {
@@ -122,16 +133,13 @@ export async function POST(request: Request) {
           }
         }
 
-        // Add current user message
         conversationHistory.push({
           role: "user",
           parts: [{ text: message }],
         });
 
-        // Discover MCP tools at runtime for Gemini
         const mcpTools = await listMcpTools();
 
-        // First request: ask Gemini to use tools with conversation history
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash",
           contents: conversationHistory as any,
@@ -149,7 +157,6 @@ export async function POST(request: Request) {
           [];
         const toolCalls = response.functionCalls || [];
 
-        // Execute each tool call
         if (toolCalls && toolCalls.length > 0) {
           for (const call of toolCalls) {
             console.log(`Executing tool: ${call.name}`, call.args);
@@ -161,16 +168,13 @@ export async function POST(request: Request) {
           }
         }
 
-        // Generate final response based on tool results
         let finalResponse = response.text ?? "";
 
         if (toolResults.length > 0) {
-          // Send tool results back to Gemini for final answer
           const toolResultsText = toolResults
             .map((r) => `Tool ${r.toolName} returned: ${r.result}`)
             .join("\n");
 
-          // Use conversation history + tool results
           const finalContents = [...conversationHistory];
           finalContents.push({
             role: "model",
@@ -192,7 +196,6 @@ export async function POST(request: Request) {
           finalResponse = finalRes.text ?? "";
         }
 
-        // Save to MongoDB (chat was already fetched at the beginning for history)
         if (!chat) {
           chat = new Chat({
             agentId: lowerId,

@@ -10,7 +10,6 @@ import { useX402 } from "@/hooks/useX402";
 import { useActiveWallet } from "thirdweb/react";
 import { toast } from "sonner";
 
-// Format message with markdown-like syntax
 const formatMessage = (content: string) => {
   const lines = content.split("\n");
   return lines.map((line, idx) => {
@@ -24,7 +23,6 @@ const formatMessage = (content: string) => {
         </div>
       );
     }
-    // Handle bold text with **
     return (
       <div key={idx} className={line.trim() ? "my-1" : "my-0.5"}>
         {parseBold(line)}
@@ -33,7 +31,6 @@ const formatMessage = (content: string) => {
   });
 };
 
-// Parse bold text marked with **
 const parseBold = (text: string) => {
   const parts = text.split(/\*\*(.+?)\*\*/g);
   return parts.map((part, i) => {

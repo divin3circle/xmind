@@ -163,12 +163,32 @@ async function createPaymentHeader({
   userAddress: string;
 }): Promise<string> {
   try {
+    const { payTo, asset, maxTimeoutSeconds } = paymentRequirements;
+
+    if (!payTo || !asset) {
+      throw new Error(
+        "Payment details missing seller address or asset. Please verify deployment env vars.",
+      );
+    }
+
+    if (!ethers.isAddress(payTo)) {
+      throw new Error(
+        "Seller wallet address is invalid. Check SELLER_WALLET configuration.",
+      );
+    }
+
+    if (!ethers.isAddress(asset)) {
+      throw new Error(
+        "Payment token address is invalid. Check NEXT_PUBLIC_PAYMENT_TOKEN_ADDRESS configuration.",
+      );
+    }
+
     const network = await provider.getNetwork();
     const chainId = Number(network.chainId);
 
     const now = Math.floor(Date.now() / 1000);
     const validAfter = 0;
-    const validBefore = now + (paymentRequirements.maxTimeoutSeconds || 300);
+    const validBefore = now + (maxTimeoutSeconds || 300);
     const nonce = ethers.hexlify(ethers.randomBytes(32));
 
     const domain = {
