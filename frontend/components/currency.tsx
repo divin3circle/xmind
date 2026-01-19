@@ -2,6 +2,7 @@ import React from "react";
 import { IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { Button } from "./ui/button";
+import ctaImage from "../public/currency.webp";
 
 function Currency() {
   return (
@@ -29,11 +30,12 @@ function Currency() {
           </Button>
         </div>
         <Image
-          src="/currency.webp"
+          src={ctaImage}
           alt="Currency Image"
           width={400}
           height={400}
           className="mt-8 md:mt-0 md:ml-8 object-contain"
+          placeholder="blur"
         />
       </div>
     </section>

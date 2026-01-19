@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Agent } from "./agents";
+import { Agent } from "@/lib/utils";
 import { IconCalculator, IconPlus, IconStarFilled } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
@@ -70,6 +70,7 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
                 src={agent.image}
                 alt={agent.agentName}
                 width={40}
+                placeholder="blur"
                 height={40}
                 className="w-7 h-7 object-cover"
                 priority={false}
@@ -128,6 +129,7 @@ function AgentCard({ agent }: { agent: Agent }) {
               <Image
                 src={agent.image}
                 alt={agent.agentName}
+                placeholder="blur"
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"

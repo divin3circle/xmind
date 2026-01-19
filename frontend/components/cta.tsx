@@ -3,6 +3,7 @@ import { IconArrowRightDashed, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
+import ctaImage from "../public/cta.png";
 
 function CTA() {
   const router = useRouter();
@@ -31,7 +32,8 @@ function CTA() {
           </Button>
         </div>
         <Image
-          src="/cta.png"
+          src={ctaImage}
+          placeholder="blur"
           alt="Currency Image"
           width={400}
           height={400}

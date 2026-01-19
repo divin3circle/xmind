@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { getTemplateSamples } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { IconSend } from "@tabler/icons-react";
+import { IconLoader2, IconSend } from "@tabler/icons-react";
 import Image from "next/image";
 import { useX402 } from "@/hooks/useX402";
 import { useActiveWallet } from "thirdweb/react";
@@ -33,13 +33,21 @@ const formatMessage = (content: string) => {
 };
 
 const parseBold = (text: string) => {
-  const parts = text.split(/\*\*(.+?)\*\*/g);
+  const parts = text.split(/(\*\*[^*]+?\*\*|`[^`]+`)/g);
   return parts.map((part, i) => {
-    if (i % 2 === 1) {
+    if (!part) return null;
+    if (part.startsWith("**") && part.endsWith("**")) {
       return (
         <strong key={i} className="font-semibold">
-          {part}
+          {part.slice(2, -2)}
         </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <em key={i} className="bg-green-500/20 px-1">
+          {part.slice(1, -1)}
+        </em>
       );
     }
     return <span key={i}>{part}</span>;
@@ -63,7 +71,7 @@ function WelcomeChat({ id }: { id: string }) {
   const router = useRouter();
   const { payForResource, isPending, error, isError } = useX402();
   const activeWallet = useActiveWallet();
-  const { templates } = useTemplates();
+  const { templates, loading: templatesLoading } = useTemplates();
   const template = templates?.find((template) => template._id === id);
 
   const scrollToBottom = () => {
@@ -119,11 +127,21 @@ function WelcomeChat({ id }: { id: string }) {
     }
   };
 
+  if (templatesLoading) {
+    return (
+      <div className="h-[90vh] flex items-center justify-center flex-col">
+        <IconLoader2 className="animate-spin text-muted-foreground mx-auto" />
+      </div>
+    );
+  }
+
   if (!template) {
     return (
       <div className="h-[90vh] flex items-center justify-center flex-col">
-        <div className="border border-muted-foreground p-2 text-sm ">
-          <p className="font-sans text-2xl font-bold mb-2">Agent not found</p>
+        <div className="text-muted-foreground p-2 text-xs ">
+          <p className="font-sans text-2xl font-bold mb-2">
+            Template not found
+          </p>
         </div>
       </div>
     );
@@ -318,7 +336,7 @@ function WelcomeChat({ id }: { id: string }) {
           className="mt-4 w-full border-dashed border font-sans"
           onClick={() => router.push("/chat")}
         >
-          Back to Agents
+          Back to Templates
         </Button>
       </div>
     </div>

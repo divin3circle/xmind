@@ -6,7 +6,7 @@ import WelcomeChat from "./welcome";
 
 function AgentChatPage() {
   const { id } = useParams<{ id: string }>();
-  console.log("Agent ID:", id);
+
   return (
     <div className="max-w-7xl mx-auto my-0">
       <DashboardNavbar />

@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-import React from "react";
 import { Button } from "./ui/button";
 import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import robotImage from "../public/robot.png";
 
 function Hero() {
   const router = useRouter();
@@ -45,10 +45,13 @@ function Hero() {
         </div>
       </div>
       <Image
-        src="/robot.png"
+        src={robotImage}
         alt="Hero Image"
         width={500}
         height={500}
+        priority
+        placeholder="blur"
+        sizes="(max-width: 768px) 100vw, 500px"
         className="mt-8 md:mt-0 md:ml-8 object-contain"
       />
     </div>
