@@ -39,11 +39,19 @@ function formatBigNumberToReducedString(value: bigint): string {
   }
 }
 
-export function TemplateSelectorCard({ template }: { template: ITemplate }) {
+export function TemplateSelectorCard({
+  template,
+  notNavigable,
+}: {
+  template: ITemplate;
+  notNavigable?: boolean;
+}) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/chat/${template._id}`)}
+      onClick={() =>
+        notNavigable !== true && router.push(`/chat/${template._id}`)
+      }
       className="border cursor-pointer border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all overflow-hidden  duration-500 "
     >
       <IconPlus
