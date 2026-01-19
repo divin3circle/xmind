@@ -16,10 +16,10 @@ function Currency() {
             Native Currency of the AI Ecosystem
           </h1>
           <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
-            All transactions within the app are powered by the USDC.e native to
-            the Cronos Blockchain. This stablecoin coupled with the x402
-            protocol ensures secure, fast, and low-cost payments for agent
-            workflows.
+            All transactions within the app are powered by the USDC.e(devUSDC.e
+            on Cronos Testnet) native to the Cronos Blockchain. This stablecoin
+            coupled with the x402 protocol ensures secure, fast, and low-cost
+            payments for agent workflows.
           </p>
           <Button
             className="mt-10 w-full md:w-1/2 border-green-500 border-dashed font-sans"

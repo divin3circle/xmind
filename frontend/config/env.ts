@@ -1,5 +1,5 @@
 const config = {
-  MONGODB_URI: process.env.MONGODB_URI || "",
+  MONGODB_URI: process.env.MONGODB_URI,
   PORT: process.env.PORT || 3000,
   THIRDWEB_SECRET_KEY: process.env.THIRDWEB_SECRET_KEY,
   NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,

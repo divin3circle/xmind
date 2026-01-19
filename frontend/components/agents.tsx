@@ -1,75 +1,13 @@
-import React from "react";
-import { IconChevronsDown, IconPlus } from "@tabler/icons-react";
+"use client";
+import { IconChevronsDown, IconLoader2, IconPlus } from "@tabler/icons-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import AgentCard from "./agent-card";
-
-export interface Agent {
-  _id?: string;
-  agentName: string;
-  image: string;
-  creatorAddress: string;
-  tagline?: string;
-  description: string;
-  tasksCompleted: number;
-  totalEarned: string;
-  ratings: number[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export const mockAgents: Agent[] = [
-  {
-    _id: "1",
-    agentName: "Zephyr Ops",
-    tagline: "Secure Transaction Executor",
-    image: "/ai-agent2.webp",
-    creatorAddress: "0x9f2c...a1b3",
-    description:
-      "Zephyr helps you executes the transaction in a safe sandbox, and returns a plain-English summary with clear warnings.",
-    totalEarned: "12500000000000",
-    tasksCompleted: 150,
-    ratings: [5, 4, 5, 5, 4],
-  },
-  {
-    _id: "2",
-    agentName: "Aurora Nexus",
-    tagline: "Yield Opportunity Analyzer",
-    creatorAddress: "0x1c3d...b4e6",
-    description:
-      "Aurora scans pools and farms analyzes APY, TVL, risks, and short-term trends, then ranks the top 5 yield opportunities.",
-    image: "/ai-agent.jpg",
-    totalEarned: "800000000000",
-    tasksCompleted: 95,
-    ratings: [4, 4, 5, 3, 4],
-  },
-  {
-    _id: "3",
-    agentName: "Zk Staks",
-    tagline: "ERC-4337 UserOperation Generator",
-    creatorAddress: "0x2e5f...d8c2",
-    description:
-      "Zk Staks uses natural language to generate the perfect ERC-4337 UserOperation bundle (approve + swap + stake in one signature).",
-    image: "/staks.jpeg",
-    totalEarned: "6500000000000",
-    tasksCompleted: 120,
-    ratings: [5, 5, 4, 5, 5],
-  },
-  {
-    _id: "4",
-    agentName: "Omni",
-    tagline: "Cross-Chain Liquidity Optimizer",
-    creatorAddress: "0x7a4b...e3f9",
-    description:
-      "Omni checks real-time liquidity depth on official bridges, third-party bridges and CEX withdrawal fees returning a route that saves you the most on slippage and gas.",
-    image: "/omni.jpeg",
-    totalEarned: "7200000000000",
-    tasksCompleted: 135,
-    ratings: [5, 4, 5, 4, 5],
-  },
-];
+import { useTemplates } from "@/hooks/useTemplates";
+import TemplateCard from "./template-card";
 
 function Agents() {
+  const { loading, error, templates } = useTemplates();
+
   return (
     <section className="my-24">
       <div className="py-8 mx-4 border mt-8 relative border-dashed px-4 overflow-hidden">
@@ -79,16 +17,16 @@ function Agents() {
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
 
         <h1 className="text-xl font-bold font-sans text-left">
-          Available Agents
+          Available Templates
         </h1>
         <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-1">
-          Don&apos;t see an agent that fits your needs? Agent creation coming
-          soon
+          These are our MCP AI Agent personalities, that you can base your
+          creation off.
         </p>
         <div className="flex items-center justify-between flex-col md:flex-row mt-4">
           <Input
             className="w-full font-sans md:w-1/4 h-10"
-            placeholder="Search agents"
+            placeholder="Find a personality template"
           />
           <div className="mt-4 md:mt-0 font-sans text-xs text-muted-foreground flex items-center justify-between w-full md:w-auto">
             <Button
@@ -112,11 +50,17 @@ function Agents() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mt-8 ">
-          {mockAgents.map((agent) => (
-            <AgentCard key={agent._id} agent={agent} />
-          ))}
-        </div>
+        {loading && <IconLoader2 className="mt-8 mx-auto animate-spin" />}
+        {error && (
+          <p className="mt-8 text-center text-red-500">Error: {error}</p>
+        )}
+        {!loading && !error && (
+          <div className="flex flex-wrap gap-4 mt-8 ">
+            {templates.map((template) => (
+              <TemplateCard key={template._id} template={template} />
+            ))}
+          </div>
+        )}
       </div>
       <div className="px-4">
         <Button

@@ -1,6 +1,21 @@
-import { mockAgents } from "@/components/agents";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+export interface Agent {
+  _id?: string;
+  agentName: string;
+  image: string;
+  creatorAddress: string;
+  tagline?: string;
+  description: string;
+  tasksCompleted: number;
+  totalEarned: string;
+  ratings: number[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export const mockAgents: Agent[] = [];
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

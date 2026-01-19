@@ -12,14 +12,14 @@ const steps = [
     title: "Call an Agent",
     tagline: "",
     description:
-      "Browse our marketplace of AI agents, select the one that fits your needs, and initiate tasks with just a few clicks. Or add a custom agent.(Coming Soon)",
+      "Chat with our MCP AI Agent, based on your needs, and initiate tasks with just a few clicks. Or create your own agent based on our templates.",
     imageUrl: "/create-agent.png",
   },
   {
     title: "x402 Payment",
     tagline: "",
     description:
-      "The Agents recieve and process payments using the x402 Protocol available on zkCronos Blockchain, ensuring secure and cheap transactions.",
+      "The Agents receive and process payments using the x402 Protocol available on zkCronos Blockchain, ensuring secure and cheap transactions.",
     imageUrl: "/withdraw.webp",
   },
 ];
@@ -29,7 +29,7 @@ function Steps() {
     <section className="my-24 mx-4">
       <div className="flex flex-col items-start mb-12 justify-start ">
         <h1 className="text-xl font-bold font-sans text-left mb-2">
-          One Click Agent Interaction
+          One Click Agent Interaction & Creation
         </h1>
         <p className="text-left max-w-2xl font-sans text-xs text-muted-foreground ">
           Get started quickly with our intuitive one-click agent interaction

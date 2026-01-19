@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Agent } from "./agents";
-import { IconCalculator, IconPlus, IconStarFilled } from "@tabler/icons-react";
+import { IconPlus, IconStarFilled, IconUserCircle } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
+import { ITemplate } from "@/lib/models/Template";
 
 function formatBigNumberToReducedString(value: bigint): string {
   const USDC_DECIMALS = 1_000_000n;
@@ -39,11 +39,11 @@ function formatBigNumberToReducedString(value: bigint): string {
   }
 }
 
-export function AgentSelectorCard({ agent }: { agent: Agent }) {
+export function TemplateSelectorCard({ template }: { template: ITemplate }) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/chat/${agent._id}`)}
+      onClick={() => router.push(`/chat/${template._id}`)}
       className="border cursor-pointer border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all overflow-hidden  duration-500 "
     >
       <IconPlus
@@ -67,8 +67,8 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
           <div className="flex items-center gap-2">
             <div className="border border-dashed p-1">
               <Image
-                src={agent.image}
-                alt={agent.agentName}
+                src={template.image}
+                alt={template.templateName}
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -78,18 +78,18 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {agent.agentName}
+                {template.templateName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {agent.creatorAddress}
+                {template.creatorAddress}
               </p>
             </div>
           </div>
         </div>
         <div className="mt-2">
-          {agent.tagline && (
+          {template.tagline && (
             <p className="text-xs font-sans text-muted-foreground font-semibold">
-              {agent.tagline}
+              {template.tagline}
             </p>
           )}
         </div>
@@ -98,11 +98,11 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
   );
 }
 
-function AgentCard({ agent }: { agent: Agent }) {
+function TemplateCard({ template }: { template: ITemplate }) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/chat/${agent._id}`)}
+      onClick={() => router.push(`/chat/${template._id}`)}
       className="border cursor-pointer border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all  duration-500 "
     >
       <IconPlus
@@ -126,8 +126,8 @@ function AgentCard({ agent }: { agent: Agent }) {
           <div className="flex items-center gap-2">
             <div className="border border-dashed p-1">
               <Image
-                src={agent.image}
-                alt={agent.agentName}
+                src={template.image}
+                alt={template.templateName}
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -137,10 +137,11 @@ function AgentCard({ agent }: { agent: Agent }) {
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {agent.agentName}
+                {template.templateName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {agent.creatorAddress}
+                {template.creatorAddress.slice(0, 6)}...
+                {template.creatorAddress.slice(-4)}
               </p>
             </div>
           </div>
@@ -153,13 +154,14 @@ function AgentCard({ agent }: { agent: Agent }) {
           </Button>
         </div>
         <p className="mt-6 font-sans text-xs text-muted-foreground">
-          {agent.description}
+          {template.description}
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-sans text-muted-foreground">Earned</p>
             <p className="font-sans text-xs font-semibold">
-              {formatBigNumberToReducedString(BigInt(agent.totalEarned))} USDC.e
+              {formatBigNumberToReducedString(BigInt(template.totalEarned))}{" "}
+              USDC.e
             </p>
           </div>
           <div className="flex items-center justify-between">
@@ -167,9 +169,13 @@ function AgentCard({ agent }: { agent: Agent }) {
               Avg. Rating
             </p>
             <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {(
-                agent.ratings.reduce((a, b) => a + b, 0) / agent.ratings.length
-              ).toFixed(1)}
+              {template.ratings.length > 0
+                ? (
+                    template.ratings.reduce((a, b) => a + b, 0) /
+                    template.ratings.length
+                  ).toFixed(1)
+                : 0}
+              {}
               <IconStarFilled
                 size={14}
                 className="inline-block ml-1 text-yellow-500"
@@ -177,12 +183,10 @@ function AgentCard({ agent }: { agent: Agent }) {
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-sans text-muted-foreground">
-              Tasks Completed
-            </p>
+            <p className="text-xs font-sans text-muted-foreground">Used By</p>
             <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {agent.tasksCompleted}
-              <IconCalculator
+              {template.usedBy}
+              <IconUserCircle
                 size={14}
                 className="inline-block ml-1 text-foreground"
               />
@@ -194,4 +198,4 @@ function AgentCard({ agent }: { agent: Agent }) {
   );
 }
 
-export default AgentCard;
+export default TemplateCard;

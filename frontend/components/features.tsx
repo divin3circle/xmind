@@ -3,24 +3,24 @@ import FeatureCard from "./feature-card";
 
 const features = [
   {
-    title: "Transaction Simulator",
-    tagline: "Stop Signing Blindly",
+    title: "Create an Agent",
+    tagline: "Deploy a Helpful MCP AI Agent",
     description:
-      "Paste any calldata or contract interaction — xMind forks the current Cronos zkEVM state, executes the transaction in a safe sandbox, and returns a plain-English summary with clear warnings.",
+      "With xMind, you can easily create and deploy your own MCP AI Agent on the Cronos and use it to automate repeated tasks, process real-world data, or enhance user engagement in your dApps.",
     imageUrl: "/feature2.avif",
   },
   {
-    title: "Yield & Pool Optimizer",
+    title: "Yield & Pool Information",
     tagline: "Find the Best Opportunities Fast",
     description:
-      "xMind scans live Cronos pools and farms analyzes APY, TVL, impermanent loss risk, and short-term trends, then ranks the top 5 yield opportunities optimized for your chosen time horizon.",
+      "xMind MCP AI Agent scans live Cronos EVM pools and farms on VVS and H2 protocols and provides yield optimization suggestions in plain English, so you can maximize returns without endless research.",
     imageUrl: "/feature2.webp",
   },
   {
-    title: "One-Click Account Abstraction Bundler",
-    tagline: "Turn Ideas into Bundled Actions",
+    title: "Cronos Chain Information",
+    tagline: "Get Instant Answers",
     description:
-      "xMind uses natural language to generate the perfect ERC-4337 UserOperation bundle (approve + swap + stake in one signature). You sign once instead of juggling multiple transactions, saving gas and time.",
+      "xMind uses Crypto.com Developer SDK and AI SDK to provide instant, accurate answers to your questions about the Cronos EVM blockchain, wallets, transactions, contracts, and dApps in plain English.",
     imageUrl: "/feature3.jpg",
   },
 ];

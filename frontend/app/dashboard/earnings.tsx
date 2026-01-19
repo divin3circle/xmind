@@ -1,8 +1,11 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 function Earnings() {
+  const router = useRouter();
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">
       <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
@@ -89,14 +92,14 @@ function Earnings() {
             complete tasks on Cronos.
           </p>
           <Button
-            disabled
+            onClick={() => router.push("/create")}
             className="mt-4 disabled:cursor-not-allowed font-sans border-dashed"
           >
             Create Agent
           </Button>
           <p className="text-xs flex items-center justify-start mt-2 gap-1 text-muted-foreground">
             <span className="text-base">[</span>
-            Coming Soon
+            Beta
             <span className="text-base">]</span>
           </p>
         </div>

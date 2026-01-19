@@ -20,6 +20,7 @@ function Connect() {
     if (
       authService.isAuthenticated() &&
       path !== "/agents" &&
+      path !== "/create" &&
       !path.includes("chat")
     ) {
       router.push("/dashboard");
