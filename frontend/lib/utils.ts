@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ITemplate } from "./models/Template";
 
 export interface Agent {
   _id?: string;
@@ -21,33 +22,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getAgentById(id: string) {
-  return mockAgents.find((agent) => agent._id === id);
+export function getTemplateById(
+  id: string,
+  templates: ITemplate[],
+): ITemplate | undefined {
+  return templates.find((template) => template._id === id);
 }
 
 const samples: Record<string, string[]> = {
-  "1": [
-    "Summarize the risks and approvals in this swap transaction before execution.",
-    "Simulate this transaction in a sandbox and flag any potential slippage or allowance issues.",
-    "Generate a plain-English explanation of what this contract call will do on-chain.",
-  ],
-  "2": [
+  "696dc9bbc94a78a12a77893f": [
     "Find the top 3 yield farms this week with APY, TVL, and risk notes.",
     "Compare two pools and tell me which has better short-term risk-adjusted yield.",
     "Scan new farms and return that which APY changed by more than 10% today.",
   ],
-  "3": [
-    "Create an ERC-4337 UserOperation to approve, swap, and stake 200 USDC.e in one bundle.",
-    "Draft a UserOperation that unstakes and swaps rewards to USDC.e, minimizing gas.",
-    "Validate this UserOperation for gas limits and suggest optimizations before signing.",
+  "696dc9bbc94a78a12a778941": [
+    "What is the balance of this address on Cronos?",
+    "Can you retriev information about this transaction hash?",
+    "What's the cronos id of this wallet address?",
   ],
-  "4": [
+  "696dc9bbc94a78a12a778940": [
     "Find the cheapest cross-chain route from Ethereum to Avalanche for 5000 USDC.e with low slippage.",
     "Compare official bridge vs third-party bridges and CEX off-ramps for moving 1 ETH to Base.",
     "Propose a liquidity route that minimizes gas while avoiding high slippage pools right now.",
   ],
 };
 
-export function getAgentSamples(agentId: string): string[] {
-  return samples[agentId] || [];
+export function getTemplateSamples(templateId: string): string[] {
+  return samples[templateId] || [];
 }

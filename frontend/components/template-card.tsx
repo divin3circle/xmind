@@ -69,6 +69,7 @@ export function TemplateSelectorCard({ template }: { template: ITemplate }) {
               <Image
                 src={template.image}
                 alt={template.templateName}
+                loading="lazy"
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -81,7 +82,8 @@ export function TemplateSelectorCard({ template }: { template: ITemplate }) {
                 {template.templateName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {template.creatorAddress}
+                {template.creatorAddress.slice(0, 6)}...
+                {template.creatorAddress.slice(-4)}
               </p>
             </div>
           </div>

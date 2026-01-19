@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAgentById, getAgentSamples } from "@/lib/utils";
+import { getTemplateSamples } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { IconSend } from "@tabler/icons-react";
@@ -9,6 +9,7 @@ import Image from "next/image";
 import { useX402 } from "@/hooks/useX402";
 import { useActiveWallet } from "thirdweb/react";
 import { toast } from "sonner";
+import { useTemplates } from "@/hooks/useTemplates";
 
 const formatMessage = (content: string) => {
   const lines = content.split("\n");
@@ -53,8 +54,7 @@ interface Message {
 }
 
 function WelcomeChat({ id }: { id: string }) {
-  const agent = getAgentById(id);
-  const samples = getAgentSamples(id);
+  const samples = getTemplateSamples(id);
   const [message, setMessage] = React.useState("");
   const [isChatting, setIsChatting] = React.useState(false);
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -63,6 +63,8 @@ function WelcomeChat({ id }: { id: string }) {
   const router = useRouter();
   const { payForResource, isPending, error, isError } = useX402();
   const activeWallet = useActiveWallet();
+  const { templates } = useTemplates();
+  const template = templates?.find((template) => template._id === id);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -117,7 +119,7 @@ function WelcomeChat({ id }: { id: string }) {
     }
   };
 
-  if (!agent) {
+  if (!template) {
     return (
       <div className="h-[90vh] flex items-center justify-center flex-col">
         <div className="border border-muted-foreground p-2 text-sm ">
@@ -134,8 +136,8 @@ function WelcomeChat({ id }: { id: string }) {
           <div className="flex items-center gap-3">
             <div className="border border-dashed p-1">
               <Image
-                src={agent.image}
-                alt={agent.agentName}
+                src={template.image}
+                alt={template.templateName}
                 width={40}
                 height={40}
                 className="w-10 h-10 object-cover"
@@ -143,9 +145,11 @@ function WelcomeChat({ id }: { id: string }) {
             </div>
             <div>
               <h2 className="font-sans font-semibold text-sm">
-                {agent.agentName}
+                {template.templateName}
               </h2>
-              <p className="text-xs text-muted-foreground">{agent.tagline}</p>
+              <p className="text-xs text-muted-foreground">
+                {template.tagline}
+              </p>
             </div>
           </div>
           <Button
@@ -192,7 +196,7 @@ function WelcomeChat({ id }: { id: string }) {
             <div className="flex justify-start">
               <div className="max-w-[75%] border border-dashed p-3 bg-muted/50">
                 <p className="text-sm font-sans text-muted-foreground">
-                  {agent.agentName} processing payment{" "}
+                  {template.templateName} processing payment{" "}
                   <span className="animate-pulse">...</span>
                 </p>
               </div>
@@ -205,7 +209,7 @@ function WelcomeChat({ id }: { id: string }) {
           <div className="flex gap-2">
             <div className="flex-1 border border-dashed p-1">
               <Input
-                placeholder={`Message ${agent.agentName}...`}
+                placeholder={`Message ${template.templateName}...`}
                 className="bg-background h-10 border-none"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -255,14 +259,14 @@ function WelcomeChat({ id }: { id: string }) {
     <div className="h-[90vh] flex items-center justify-center flex-col max-w-4xl">
       <div className=" p-2 text-sm w-full flex items-center flex-col ">
         <p className="font-sans text-base font-bold mb-2">
-          Hi I&apos;m {agent.agentName}
+          Hi I&apos;m {template.templateName}
         </p>
         <p className="font-sans text-sm text-muted-foreground max-w-md text-center">
-          {agent.description}
+          {template.tagline}
         </p>
         <div className="mt-4 w-full border border-dashed p-1">
           <Input
-            placeholder={`What would you like to ask ${agent.agentName}?`}
+            placeholder={`What would you like to ask ${template.templateName}?`}
             className="bg-background h-12"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
