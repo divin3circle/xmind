@@ -19,7 +19,12 @@ import Image from "next/image";
 import agentImage from "@/public/currency.webp";
 import walletImage from "@/public/connect.webp";
 import robotImage from "@/public/robot.png";
-import { IconCopy, IconInfoCircle, IconWallet } from "@tabler/icons-react";
+import {
+  IconBellPlus,
+  IconCopy,
+  IconInfoCircle,
+  IconWallet,
+} from "@tabler/icons-react";
 import { StepIndicator } from "@/components/step-indicator";
 import {
   Item,
@@ -42,10 +47,25 @@ import { TemplateSelectorCard } from "@/components/template-card";
 import { ITemplate } from "@/lib/models/Template";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { set } from "mongoose";
 
 interface CreatedWallet {
   walletAddress: string;
   privateKey: string;
+}
+
+interface Task {
+  task: string;
+  duration: string;
 }
 
 const formSchema = z.object({
@@ -374,9 +394,21 @@ function StepFour({
   nextStep: () => void;
   goToStep: (step: number) => void;
 }) {
+  const [tasks, setTasks] = React.useState<Task[]>([]);
+  const [task, setTask] = React.useState("");
+  const [duration, setDuration] = React.useState<string>("Every 3 Minutes");
+
+  const handleAddTask = () => {
+    setTasks([...tasks, { task, duration }]);
+    setTask("");
+    setDuration("");
+  };
+
   const handleNext = () => {
-    // set relevant form values here if needed
-    nextStep();
+    if (tasks.length > 0) {
+      // set relevant form values here if needed
+      nextStep();
+    }
   };
   return (
     <div className="flex flex-col gap-4 items-center justify-center">
@@ -387,10 +419,77 @@ function StepFour({
           want done when you want it done, and let your agent handle the rest.
         </p>
       </div>
+      <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-wrap gap-2 my-4 w-full justify-center">
+          {tasks.length === 0 && (
+            <p className="text-xs text-center text-muted-foreground">
+              No tasks added yet. Please add tasks to below.
+            </p>
+          )}
+          {tasks.map((task, index) => (
+            <div
+              key={index}
+              onClick={() => {
+                //remove
+                setTasks(tasks.filter((t) => t.task !== task.task));
+              }}
+              className="border border-dashed p-2 hover:bg-green-500/10 cursor-pointer hover:border-green-500/50 flex flex-col gap-1"
+            >
+              <p className="text-sm font-semibold">
+                {task.task.slice(0, 20)}
+                {task.task.length > 20 ? "..." : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Schedule: {task.duration}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col md:flex-row mt-8 gap-1 items-center justify-center">
+          <div className="w-full max-w-sm md:w-3/4">
+            <Input
+              placeholder={"Make payments to this address: 0x1234..."}
+              className="bg-background"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+            />
+          </div>
+          <Select onValueChange={(value) => setDuration(value)}>
+            <SelectTrigger className="w-full md:w-1/4 border border-dashed">
+              <SelectValue placeholder="Duration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Duration</SelectLabel>
+                <SelectItem value="Every 3 Minutes">Every 3 Minutes</SelectItem>
+                <SelectItem value="Every 15 Minutes">
+                  Every 15 Minutes
+                </SelectItem>
+                <SelectItem value="Every 1 Hour">Every 1 Hour</SelectItem>
+                <SelectItem value="Every 4 Hours">Every 4 Hours</SelectItem>
+                <SelectItem value="Every 12 Hours">Every 12 Hours</SelectItem>
+                <SelectItem value="Every 24 Hours">Every 24 Hours</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex mt-2 items-center justify-center">
+          <Button
+            className="font-sans flex items-center justify-center gap-1"
+            onClick={handleAddTask}
+            size="sm"
+            disabled={tasks.length >= 2}
+          >
+            Add
+            <IconBellPlus className="size-4" />
+          </Button>
+        </div>
+      </div>
       <Button
         className="w-full mt-8 md:w-1/2 border-green-500 border-dashed font-sans"
         variant="outline"
         onClick={handleNext}
+        disabled={tasks.length === 0}
       >
         Next
       </Button>
