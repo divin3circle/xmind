@@ -19,12 +19,8 @@ import Image from "next/image";
 import agentImage from "@/public/currency.webp";
 import walletImage from "@/public/connect.webp";
 import robotImage from "@/public/robot.png";
-import {
-  IconCheck,
-  IconCopy,
-  IconInfoCircle,
-  IconWallet,
-} from "@tabler/icons-react";
+import { IconCopy, IconInfoCircle, IconWallet } from "@tabler/icons-react";
+import { StepIndicator } from "@/components/step-indicator";
 import {
   Item,
   ItemActions,
@@ -67,7 +63,13 @@ const formSchema = z.object({
   tasksRan: z.number().min(0),
 });
 
-function StepOne({ nextStep }: { nextStep: () => void }) {
+function StepOne({
+  nextStep,
+  goToStep,
+}: {
+  nextStep: () => void;
+  goToStep: (step: number) => void;
+}) {
   const [isWalletCreated, setIsWalletCreated] = React.useState(false);
   const [createdWallet, setCreatedWallet] =
     React.useState<CreatedWallet | null>(null);
@@ -152,30 +154,24 @@ function StepOne({ nextStep }: { nextStep: () => void }) {
           >
             Create Wallet
           </Button>
-          <div className="flex mt-4 items-center justify-between">
-            <div className="border border-green-500/50 border-dashed w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              1
-            </div>
-            <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-            <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              2
-            </div>
-            <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-            <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              3
-            </div>
-            <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-            <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              <IconCheck size={14} />
-            </div>
-          </div>
+          <StepIndicator
+            currentStep={1}
+            totalSteps={5}
+            onStepClick={goToStep}
+          />
         </div>
       )}
     </>
   );
 }
 
-function StepTwo({ nextStep }: { nextStep: () => void }) {
+function StepTwo({
+  nextStep,
+  goToStep,
+}: {
+  nextStep: () => void;
+  goToStep: (step: number) => void;
+}) {
   const [key, setKey] = React.useState("");
   const [keyAvailable, setKeyAvailable] = React.useState(true);
 
@@ -253,28 +249,18 @@ function StepTwo({ nextStep }: { nextStep: () => void }) {
       >
         Next
       </Button>
-      <div className="flex mt-4 items-center justify-between">
-        <div className="border border-green-500/50 border-dashed  text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          1
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border  border-green-500/50 border-dashed w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          2
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-        <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          3
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-        <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          <IconCheck size={14} />
-        </div>
-      </div>
+      <StepIndicator currentStep={2} totalSteps={5} onStepClick={goToStep} />
     </div>
   );
 }
 
-function StepThree({ nextStep }: { nextStep: () => void }) {
+function StepThree({
+  nextStep,
+  goToStep,
+}: {
+  nextStep: () => void;
+  goToStep: (step: number) => void;
+}) {
   const { templates, loading, error } = useTemplates();
   const [templateSelected, setTemplateSelected] =
     React.useState<ITemplate | null>(null);
@@ -328,31 +314,23 @@ function StepThree({ nextStep }: { nextStep: () => void }) {
       >
         Next
       </Button>
-      <div className="flex mt-4 items-center justify-between">
-        <div className="border border-green-500/50 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          1
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border  border-green-500/50 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          2
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border border-green-500/50 border-dashed  w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          3
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/10" />
-        <div className="border border-green-500/10 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          <IconCheck size={14} />
-        </div>
-      </div>
+      <StepIndicator currentStep={3} totalSteps={5} onStepClick={goToStep} />
     </div>
   );
 }
 
-function StepFour({ nextStep }: { nextStep: () => void }) {
+function StepFive({
+  submitDetails,
+  values,
+  goToStep,
+}: {
+  submitDetails: (values: z.infer<typeof formSchema>) => void;
+  values: z.infer<typeof formSchema>;
+  goToStep: (step: number) => void;
+}) {
   const handleNext = () => {
     // set relevant form values here if needed
-    nextStep();
+    submitDetails(values);
   };
   return (
     <div className="flex flex-col gap-4 items-center justify-center">
@@ -384,23 +362,39 @@ function StepFour({ nextStep }: { nextStep: () => void }) {
           Privacy Policy.
         </Link>
       </p>
-      <div className="flex mt-4 items-center justify-between">
-        <div className="border border-green-500/50 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          1
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border  border-green-500/50 border-dashed text-muted-foreground w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          2
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border border-green-500/50 border-dashed  w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          3
-        </div>
-        <hr className="md:w-24 w-10 border-t border-dashed border-green-500/50" />
-        <div className="border border-green-500/50 border-dashed w-6 h-6 flex items-center justify-center text-xs font-semibold">
-          <IconCheck size={14} />
-        </div>
+      <StepIndicator currentStep={5} totalSteps={5} onStepClick={goToStep} />
+    </div>
+  );
+}
+
+function StepFour({
+  nextStep,
+  goToStep,
+}: {
+  nextStep: () => void;
+  goToStep: (step: number) => void;
+}) {
+  const handleNext = () => {
+    // set relevant form values here if needed
+    nextStep();
+  };
+  return (
+    <div className="flex flex-col gap-4 items-center justify-center">
+      <div>
+        <h1 className="text-sm font-semibold text-center">Agentic Tasks </h1>
+        <p className="text-center text-[11px] text-muted-foreground max-w-md">
+          Tasks are the power house behind autonomous agents. Define what you
+          want done when you want it done, and let your agent handle the rest.
+        </p>
       </div>
+      <Button
+        className="w-full mt-8 md:w-1/2 border-green-500 border-dashed font-sans"
+        variant="outline"
+        onClick={handleNext}
+      >
+        Next
+      </Button>
+      <StepIndicator currentStep={4} totalSteps={5} onStepClick={goToStep} />
     </div>
   );
 }
@@ -430,7 +424,7 @@ export function CreateAgentForm() {
   }
 
   function nextStep() {
-    if (step >= 4) return;
+    if (step >= 5) return;
     setStep((prev) => prev + 1);
   }
 
@@ -439,17 +433,31 @@ export function CreateAgentForm() {
     setStep((prev) => prev - 1);
   }
 
+  function goToStep(stepNumber: number) {
+    if (stepNumber < 1 || stepNumber > 5) return;
+    setStep(stepNumber);
+  }
+
   if (step === 1) {
-    return <StepOne nextStep={nextStep} />;
+    return <StepOne nextStep={nextStep} goToStep={goToStep} />;
   }
   if (step === 2) {
-    return <StepTwo nextStep={nextStep} />;
+    return <StepTwo nextStep={nextStep} goToStep={goToStep} />;
   }
   if (step === 3) {
-    return <StepThree nextStep={nextStep} />;
+    return <StepThree nextStep={nextStep} goToStep={goToStep} />;
   }
   if (step === 4) {
-    return <StepFour nextStep={nextStep} />;
+    return <StepFour nextStep={nextStep} goToStep={goToStep} />;
+  }
+  if (step === 5) {
+    return (
+      <StepFive
+        submitDetails={onSubmit}
+        values={form.getValues()}
+        goToStep={goToStep}
+      />
+    );
   }
 
   return (
