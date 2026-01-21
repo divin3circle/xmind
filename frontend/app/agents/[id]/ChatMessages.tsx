@@ -47,7 +47,7 @@ const parseBold = (text: string) => {
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isSending: boolean;
-  bottomRef: React.RefObject<HTMLDivElement>;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function ChatMessages({

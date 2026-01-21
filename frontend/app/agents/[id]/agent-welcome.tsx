@@ -38,7 +38,7 @@ export function AgentWelcome({ agentId }: AgentWelcomeProps) {
 
   const [message, setMessage] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     if (chatError) {
