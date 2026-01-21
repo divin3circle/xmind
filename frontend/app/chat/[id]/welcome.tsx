@@ -312,7 +312,7 @@ function WelcomeChat({ id }: { id: string }) {
             ? "Processing Payment..."
             : isTyping
               ? "Agent Thinking..."
-              : "Use Agent"}
+              : "Start Chat"}
         </Button>
         <div className="mt-6 w-full">
           {samples.map((sample, index) => (

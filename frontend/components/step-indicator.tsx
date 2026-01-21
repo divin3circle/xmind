@@ -6,11 +6,7 @@ interface StepIndicatorProps {
   onStepClick: (stepNumber: number) => void;
 }
 
-export function StepIndicator({
-  currentStep,
-  totalSteps,
-  onStepClick,
-}: StepIndicatorProps) {
+export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
   const getStepBorderColor = (step: number) => {
@@ -39,7 +35,7 @@ export function StepIndicator({
       {steps.map((step, index) => (
         <div key={step} className="flex items-center">
           <button
-            onClick={() => onStepClick(step)}
+            onClick={() => {}}
             className={`border border-dashed w-6 h-6 flex items-center justify-center text-xs font-semibold cursor-pointer transition-colors hover:opacity-80 ${getStepBorderColor(
               step,
             )} ${getStepTextColor(step)}`}

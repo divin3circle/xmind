@@ -1,20 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { ITemplate } from "./models/Template";
+import type { IAgent } from "./models/Agents";
 
-export interface Agent {
-  _id?: string;
-  agentName: string;
-  image: string;
-  creatorAddress: string;
-  tagline?: string;
-  description: string;
-  tasksCompleted: number;
-  totalEarned: string;
-  ratings: number[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+export type Agent = IAgent;
 
 export const mockAgents: Agent[] = [];
 

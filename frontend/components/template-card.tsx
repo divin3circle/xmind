@@ -87,7 +87,7 @@ export function TemplateSelectorCard({
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {template.templateName}
+                {template.templateName} Template
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
                 {template.creatorAddress.slice(0, 6)}...
@@ -147,7 +147,7 @@ function TemplateCard({ template }: { template: ITemplate }) {
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {template.templateName}
+                {template.templateName} Template
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
                 {template.creatorAddress.slice(0, 6)}...

@@ -23,6 +23,7 @@ import {
   IconBellPlus,
   IconCopy,
   IconInfoCircle,
+  IconLoader2,
   IconWallet,
 } from "@tabler/icons-react";
 import { StepIndicator } from "@/components/step-indicator";
@@ -56,12 +57,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { set } from "mongoose";
-
-interface CreatedWallet {
-  walletAddress: string;
-  privateKey: string;
-}
+import { toast } from "sonner";
+import { useCreateWallet, WalletCreated } from "@/hooks/useCreateWallet";
+import config from "@/config/env";
+import { AlertDialogModal } from "@/components/alert";
+import { useDeployContract } from "@/hooks/useDeployContract";
+import { useActiveAccount } from "thirdweb/react";
 
 interface Task {
   task: string;
@@ -86,18 +87,38 @@ const formSchema = z.object({
 function StepOne({
   nextStep,
   goToStep,
+  form,
 }: {
   nextStep: () => void;
   goToStep: (step: number) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
 }) {
   const [isWalletCreated, setIsWalletCreated] = React.useState(false);
-  const [createdWallet, setCreatedWallet] =
-    React.useState<CreatedWallet | null>(null);
+  const [walletData, setWalletData] = React.useState<WalletCreated | undefined>(
+    undefined,
+  );
+  const { createNewWallet, loading, error } = useCreateWallet();
+  console.log("Wallet Data Error:", error);
 
   const handleNext = () => {
-    if (isWalletCreated) {
-      // set relevant form values here if needed
+    if (isWalletCreated && walletData) {
+      form.setValue("walletAddress", walletData.data.address);
+      form.setValue("privateKey", walletData.data.privateKey);
       nextStep();
+    } else return toast.error("Please create a wallet to proceed");
+  };
+
+  const handleCreateWallet = async () => {
+    console.log("Creating wallet...");
+    try {
+      const wallet = await createNewWallet();
+      if (wallet) {
+        setIsWalletCreated(true);
+      }
+      setWalletData(wallet);
+    } catch (error) {
+      console.log(error);
+      setIsWalletCreated(false);
     }
   };
   return (
@@ -122,19 +143,47 @@ function StepOne({
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
-                <Button variant="outline" size="sm" className="text-[11px]">
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`
+                      --START OF PRIVATE KEY--
+                      ${walletData?.data.privateKey}
+                      --END OF PRIVATE KEY--
+
+                      --START OF MNEMONIC--
+                      ${walletData?.data.mnemonic}
+                      --END OF MNEMONIC--
+                    `);
+                    toast.success(
+                      "Keys copied successfully. Store them well you won't see them again!",
+                    );
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-[11px]"
+                >
                   Copy
                   <IconCopy className="ml-2 size-4" />
                 </Button>
               </ItemActions>
             </Item>
             <Item variant="outline" size="sm" asChild>
-              <a href="#">
+              <a
+                href={`${config.NEXT_PUBLIC_CRONOS_EXPLORER_URL}${walletData?.data.address}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <ItemMedia>
                   <IconWallet className="size-6" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>View Wallet</ItemTitle>
+                  <ItemTitle>
+                    View Wallet
+                    <span className="text-[11px] text-green-500 ml-2">
+                      {walletData?.data.address.slice(0, 6)}...
+                      {walletData?.data.address.slice(-4)}
+                    </span>
+                  </ItemTitle>
                 </ItemContent>
                 <ItemActions>
                   <ChevronRightIcon className="size-4" />
@@ -168,11 +217,15 @@ function StepOne({
             </p>
           </div>
           <Button
-            className="w-full md:w-1/2 border-green-500 border-dashed font-sans"
+            className="w-full md:w-1/2 flex items-center justify-center border-green-500 border-dashed font-sans"
             variant="outline"
-            onClick={() => setIsWalletCreated(true)}
+            onClick={handleCreateWallet}
           >
-            Create Wallet
+            {loading ? (
+              <IconLoader2 className="animate-spin" />
+            ) : (
+              "Create Wallet"
+            )}
           </Button>
           <StepIndicator
             currentStep={1}
@@ -188,22 +241,32 @@ function StepOne({
 function StepTwo({
   nextStep,
   goToStep,
+  form,
 }: {
   nextStep: () => void;
   goToStep: (step: number) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
 }) {
   const [key, setKey] = React.useState("");
   const [keyAvailable, setKeyAvailable] = React.useState(true);
 
   const handleSetApiKey = () => {
-    // Logic to save the Gemini API key
+    if (key.trim() === "" && keyAvailable) {
+      return toast.error("Please enter a valid Gemini API Key or toggle off");
+    }
+
+    if (!keyAvailable) {
+      form.setValue("geminiKey", "");
+      toast.success("Proceeding without Gemini API Key");
+      nextStep();
+      return;
+    }
+
+    form.setValue("geminiKey", key.trim());
+    toast.success("Gemini API Key set successfully");
     nextStep();
   };
 
-  const handleNext = () => {
-    // Save key & proceed to the next step
-    nextStep();
-  };
   return (
     <div className="flex flex-col gap-4 items-center justify-center">
       <Image
@@ -265,7 +328,7 @@ function StepTwo({
       <Button
         className="w-full mt-8 md:w-1/2 border-green-500 border-dashed font-sans"
         variant="outline"
-        onClick={handleNext}
+        onClick={handleSetApiKey}
       >
         Next
       </Button>
@@ -277,9 +340,11 @@ function StepTwo({
 function StepThree({
   nextStep,
   goToStep,
+  form,
 }: {
   nextStep: () => void;
   goToStep: (step: number) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
 }) {
   const { templates, loading, error } = useTemplates();
   const [templateSelected, setTemplateSelected] =
@@ -287,7 +352,11 @@ function StepThree({
 
   const handleNext = () => {
     if (templateSelected) {
-      // set relevant form values here if needed
+      form.setValue("systemPrompt", templateSelected.systemPrompt);
+      form.setValue("image", templateSelected.image);
+      form.setValue("name", templateSelected.templateName);
+      form.setValue("description", templateSelected.description);
+      toast.success("Template: " + templateSelected.templateName + " selected");
       nextStep();
     }
   };
@@ -331,6 +400,7 @@ function StepThree({
         className="w-full mt-8 md:w-1/2 border-green-500 border-dashed font-sans"
         variant="outline"
         onClick={handleNext}
+        disabled={!templateSelected}
       >
         Next
       </Button>
@@ -347,12 +417,116 @@ function StepFive({
   submitDetails: (values: z.infer<typeof formSchema>) => void;
   values: z.infer<typeof formSchema>;
   goToStep: (step: number) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
 }) {
-  const handleNext = () => {
-    // set relevant form values here if needed
-    submitDetails(values);
+  const [isDeployed, setIsDeployed] = React.useState(false);
+  const [savedTransactionHash, setSavedTransactionHash] =
+    React.useState<string>("");
+  const { deployAgent, isDeploying, error } = useDeployContract();
+  const activeAccount = useActiveAccount();
+
+  const handleDeploy = async () => {
+    if (!activeAccount) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    await deployAgent({
+      name: values.name,
+      description: values.description,
+      image: values.image,
+      systemPrompt: values.systemPrompt,
+      agentWalletAddress: values.walletAddress,
+      onSuccess: async (transactionHash, contractAddress) => {
+        try {
+          const response = await fetch("/api/agent/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: values.name,
+              description: values.description,
+              image: values.image,
+              systemPrompt: values.systemPrompt,
+              walletAddress: values.walletAddress,
+              privateKey: values.privateKey,
+              geminiKey: values.geminiKey,
+              contractAddress: contractAddress || transactionHash,
+              creatorAddress: activeAccount.address,
+              tasks: values.tasks,
+              transactionHash: transactionHash,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save agent to database");
+          }
+
+          submitDetails(values);
+          setSavedTransactionHash(transactionHash);
+          setIsDeployed(true);
+          toast.success("Agent deployed and saved successfully!");
+        } catch (err: unknown) {
+          toast.error(
+            err instanceof Error ? err.message : "Failed to save agent",
+          );
+          console.error("Database save error:", err);
+        }
+      },
+      onError: (errorMessage) => {
+        toast.error(errorMessage);
+      },
+    });
   };
-  return (
+
+  const handleSaveAndFinish = () => {
+    window.location.href = "/dashboard";
+  };
+
+  return isDeployed ? (
+    <div className="flex flex-col gap-4 items-center justify-center">
+      <Image
+        src={"/deployed.avif"}
+        alt="Deployed Image"
+        width={200}
+        height={200}
+        className="object-contain"
+      />
+      <div>
+        <h1 className="text-sm font-semibold text-center">
+          Agent Contract Deployed
+        </h1>
+        <p className="text-center text-[11px] text-muted-foreground max-w-md">
+          Your agent has been successfully deployed to the Cronos Blockchain.
+          You can now manage and monitor your agent from the dashboard.
+        </p>
+      </div>
+      {savedTransactionHash && (
+        <div className="mt-2 p-3 max-w-md">
+          <p className="text-xs font-semibold mb-1">Transaction Hash:</p>
+          <a
+            href={`${config.NEXT_PUBLIC_CRONOS_EXPLORER_URL}${activeAccount?.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-green-500 text-center hover:underline break-all"
+          >
+            {savedTransactionHash.slice(0, 16)}...
+          </a>
+          <p className="text-[11px] text-center text-muted-foreground font-semibold">
+            Click hash to view full transaction
+          </p>
+        </div>
+      )}
+      <div className="mt-4 w-full flex items-center justify-center">
+        <Button
+          className="w-full md:w-1/2 font-sans"
+          onClick={handleSaveAndFinish}
+        >
+          Go to Dashboard
+        </Button>
+      </div>
+    </div>
+  ) : (
     <div className="flex flex-col gap-4 items-center justify-center">
       <Image
         src={robotImage}
@@ -369,9 +543,17 @@ function StepFive({
           Cronos Blockchain and get Started.
         </p>
       </div>
-      <Button className="w-full mt-8 md:w-1/2 font-sans" onClick={handleNext}>
-        Deploy for 2 CRO
-      </Button>
+      <AlertDialogModal
+        values={values}
+        onDeploy={handleDeploy}
+        isDeploying={isDeploying}
+      />
+      {isDeploying && (
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Deploying your agent, this may take a few seconds...
+        </p>
+      )}
+      {error && <p className="text-red-500 text-xs text-center">{error}</p>}
       <p className="text-xs text-muted-foreground max-w-md text-center">
         By deploying your agent, you agree to our Terms of
         <Link href={"#"} className="text-green-500/50 underline ml-1">
@@ -390,15 +572,19 @@ function StepFive({
 function StepFour({
   nextStep,
   goToStep,
+  form,
 }: {
   nextStep: () => void;
   goToStep: (step: number) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
 }) {
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [task, setTask] = React.useState("");
   const [duration, setDuration] = React.useState<string>("Every 3 Minutes");
 
   const handleAddTask = () => {
+    if (task.trim() === "" || duration.trim() === "")
+      return toast.error("Please provide both task and duration");
     setTasks([...tasks, { task, duration }]);
     setTask("");
     setDuration("");
@@ -406,7 +592,11 @@ function StepFour({
 
   const handleNext = () => {
     if (tasks.length > 0) {
-      // set relevant form values here if needed
+      form.setValue(
+        "tasks",
+        tasks.map((t) => t.task + " - " + t.duration),
+      );
+      toast.success("Added " + tasks.length + " tasks to agent");
       nextStep();
     }
   };
@@ -527,27 +717,22 @@ export function CreateAgentForm() {
     setStep((prev) => prev + 1);
   }
 
-  function prevStep() {
-    if (step <= 1) return;
-    setStep((prev) => prev - 1);
-  }
-
   function goToStep(stepNumber: number) {
     if (stepNumber < 1 || stepNumber > 5) return;
     setStep(stepNumber);
   }
 
   if (step === 1) {
-    return <StepOne nextStep={nextStep} goToStep={goToStep} />;
+    return <StepOne nextStep={nextStep} goToStep={goToStep} form={form} />;
   }
   if (step === 2) {
-    return <StepTwo nextStep={nextStep} goToStep={goToStep} />;
+    return <StepTwo nextStep={nextStep} goToStep={goToStep} form={form} />;
   }
   if (step === 3) {
-    return <StepThree nextStep={nextStep} goToStep={goToStep} />;
+    return <StepThree nextStep={nextStep} goToStep={goToStep} form={form} />;
   }
   if (step === 4) {
-    return <StepFour nextStep={nextStep} goToStep={goToStep} />;
+    return <StepFour nextStep={nextStep} goToStep={goToStep} form={form} />;
   }
   if (step === 5) {
     return (
@@ -555,6 +740,7 @@ export function CreateAgentForm() {
         submitDetails={onSubmit}
         values={form.getValues()}
         goToStep={goToStep}
+        form={form}
       />
     );
   }

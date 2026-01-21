@@ -43,7 +43,7 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/chat/${agent._id}`)}
+      onClick={() => router.push(`/agents/${agent._id}`)}
       className="border cursor-pointer border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all overflow-hidden  duration-500 "
     >
       <IconPlus
@@ -68,9 +68,8 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
             <div className="border border-dashed p-1">
               <Image
                 src={agent.image}
-                alt={agent.agentName}
+                alt={agent.agentName || "Agent Image"}
                 width={40}
-                placeholder="blur"
                 height={40}
                 className="w-7 h-7 object-cover"
                 priority={false}
@@ -82,15 +81,16 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
                 {agent.agentName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {agent.creatorAddress}
+                {agent.creatorAddress.slice(0, 6)}...
+                {agent.creatorAddress.slice(-4)}
               </p>
             </div>
           </div>
         </div>
         <div className="mt-2">
-          {agent.tagline && (
+          {agent.description && (
             <p className="text-xs font-sans text-muted-foreground font-semibold">
-              {agent.tagline}
+              {agent.description.slice(0, 60)}
             </p>
           )}
         </div>
@@ -103,7 +103,7 @@ function AgentCard({ agent }: { agent: Agent }) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/chat/${agent._id}`)}
+      onClick={() => router.push(`/agents/${agent._id}`)}
       className="border cursor-pointer border-dashed p-4 md:w-68 w-full flex flex-col justify-between relative group hover:bg-green-500/10 transition-all  duration-500 "
     >
       <IconPlus
@@ -128,8 +128,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             <div className="border border-dashed p-1">
               <Image
                 src={agent.image}
-                alt={agent.agentName}
-                placeholder="blur"
+                alt={agent.agentName || "Agent Image"}
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -138,11 +137,10 @@ function AgentCard({ agent }: { agent: Agent }) {
             </div>
 
             <div className="">
-              <h2 className="font-sans font-semibold text-sm">
-                {agent.agentName}
-              </h2>
+              <h2 className="font-sans font-semibold text-sm">{agent.name}</h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {agent.creatorAddress}
+                {agent.creatorAddress.slice(0, 6)}...
+                {agent.creatorAddress.slice(-4)}
               </p>
             </div>
           </div>
@@ -169,9 +167,12 @@ function AgentCard({ agent }: { agent: Agent }) {
               Avg. Rating
             </p>
             <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {(
-                agent.ratings.reduce((a, b) => a + b, 0) / agent.ratings.length
-              ).toFixed(1)}
+              {agent.ratings.length > 0
+                ? (
+                    agent.ratings.reduce((a, b) => a + b, 0) /
+                    agent.ratings.length
+                  ).toFixed(1)
+                : "N/A"}
               <IconStarFilled
                 size={14}
                 className="inline-block ml-1 text-yellow-500"
@@ -180,10 +181,10 @@ function AgentCard({ agent }: { agent: Agent }) {
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs font-sans text-muted-foreground">
-              Tasks Completed
+              Background Tasks
             </p>
             <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {agent.tasksCompleted}
+              {agent.tasks?.length || 0}
               <IconCalculator
                 size={14}
                 className="inline-block ml-1 text-foreground"

@@ -1,11 +1,14 @@
-import React from "react";
-import { IconChevronsDown, IconPlus } from "@tabler/icons-react";
+"use client";
+import { IconChevronsDown, IconLoader2, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import AgentCard from "@/components/agent-card";
 import { Input } from "@/components/ui/input";
-import { mockAgents } from "@/lib/utils";
+import { useMyAgents } from "@/hooks/useMyAgents";
+import { useActiveAccount } from "thirdweb/react-native";
 
 function MyAgents() {
+  const { agents, loading, error } = useMyAgents();
+  const activeAccount = useActiveAccount();
   return (
     <section className="mt-14">
       <div className="py-8 mx-2 border mt-8 relative border-dashed px-4 overflow-hidden">
@@ -26,14 +29,31 @@ function MyAgents() {
         </div>
 
         <div className="flex flex-wrap gap-4 mt-8 ">
-          {mockAgents.slice(0, 2).map((agent) => (
-            <AgentCard key={agent._id} agent={agent} />
-          ))}
+          {!loading &&
+            !error &&
+            agents.map((agent) => <AgentCard key={agent._id} agent={agent} />)}
+          {loading && (
+            <IconLoader2
+              name="loader"
+              className="animate-spin mx-auto mt-8"
+              size={24}
+            />
+          )}
+          {error && (
+            <p className="mt-8 text-xs font-sans text-center text-muted-foreground">
+              Error loading agents.
+            </p>
+          )}
         </div>
 
-        {mockAgents.length === 0 && (
+        {activeAccount && agents.length === 0 && (
           <p className="mt-8 text-xs font-sans text-center text-muted-foreground">
             No agents found.
+          </p>
+        )}
+        {!activeAccount && (
+          <p className="mt-8 text-xs font-sans text-center text-muted-foreground">
+            Connect your wallet to see your agents.
           </p>
         )}
       </div>

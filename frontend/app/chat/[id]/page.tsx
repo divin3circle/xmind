@@ -1,7 +1,6 @@
 "use client";
 import DashboardNavbar from "@/app/dashboard/navbar";
 import { useParams } from "next/navigation";
-import React from "react";
 import WelcomeChat from "./welcome";
 
 function AgentChatPage() {
