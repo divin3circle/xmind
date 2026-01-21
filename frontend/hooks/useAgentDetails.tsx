@@ -40,7 +40,6 @@ export function useAgentDetails(
         throw new Error(data.error || "Failed to fetch agent");
       }
       const data = await res.json();
-      console.log("Fetched agent details:", data);
       setAgent(data.agent || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch agent");

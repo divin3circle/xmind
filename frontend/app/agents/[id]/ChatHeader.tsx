@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { SheetDetails } from "./AgentDetails";
 
 interface ChatHeaderProps {
   name: string;
@@ -33,14 +34,17 @@ export function ChatHeader({
           </p>
         </div>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-dashed"
-        onClick={onExit}
-      >
-        Exit
-      </Button>
+      <div className="flex items-center gap-2">
+        <SheetDetails />
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-dashed"
+          onClick={onExit}
+        >
+          Exit
+        </Button>
+      </div>
     </div>
   );
 }

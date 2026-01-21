@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { message, agentId, userAddress } = body;
 
-    // Validate input
     if (!message || !agentId || !userAddress) {
       return NextResponse.json(
         { error: "Missing required fields: message, agentId, or userAddress" },
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch agent from database
-    const agent = await Agents.findOne({ contractAddress: agentId });
+    const agent = await Agents.findOne({ _id: agentId });
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
@@ -250,6 +249,26 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error in chat endpoint:", error);
+
+    // Check if it's a quota/rate limit error
+    const errorObj = error as { status?: number; message?: string };
+    const isQuotaError =
+      errorObj?.status === 429 ||
+      errorObj?.message?.includes("quota") ||
+      errorObj?.message?.includes("RESOURCE_EXHAUSTED") ||
+      errorObj?.message?.includes("rate limit");
+
+    if (isQuotaError) {
+      return NextResponse.json(
+        {
+          error:
+            "Quota exceeded. The agent has reached its API limit. Please try again later or contact the agent owner.",
+          details: error instanceof Error ? error.message : String(error),
+        },
+        { status: 429 },
+      );
+    }
+
     return NextResponse.json(
       {
         error: "Failed to process chat",

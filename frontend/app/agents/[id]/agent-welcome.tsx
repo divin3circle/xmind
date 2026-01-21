@@ -13,6 +13,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { MessageInput } from "./MessageInput";
+import axios from "axios";
 
 interface AgentWelcomeProps {
   agentId: string;
@@ -76,23 +77,17 @@ export function AgentWelcome({ agentId }: AgentWelcomeProps) {
     setHasChat(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: messageToSend,
-          agentId,
-          userAddress: activeAccount.address,
-        }),
+      const response = await axios.post("/api/chat", {
+        message: messageToSend,
+        agentId,
+        userAddress: activeAccount.address,
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error("Failed to send message");
       }
 
-      const data = await response.json();
+      const data = response.data;
       const agentMessage: ChatMessage = {
         content: data.response,
         sender: "agent",
@@ -102,6 +97,36 @@ export function AgentWelcome({ agentId }: AgentWelcomeProps) {
       setMessages((prev) => [...prev, agentMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // Determine error message
+      let errorMessage = "Failed to send message. Please try again.";
+
+      if (axios.isAxiosError(error)) {
+        const responseData = error.response?.data;
+
+        if (error.response?.status === 429) {
+          errorMessage =
+            "⚠️ Gemini API rate limit exceeded. Please wait a moment before trying again.";
+        } else if (
+          error.response?.status === 402 ||
+          responseData?.error?.includes("quota") ||
+          responseData?.error?.includes("limit")
+        ) {
+          errorMessage =
+            "⚠️ Agent quota exceeded. The agent has run out of credits. Please upload a new API key or wait a moment.";
+        } else if (responseData?.error) {
+          errorMessage = `⚠️ Error: ${responseData.error}`;
+        }
+      }
+
+      // Add error message to chat as agent message
+      const errorChatMessage: ChatMessage = {
+        content: errorMessage,
+        sender: "agent",
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, errorChatMessage]);
       toast.error("Failed to send message");
     } finally {
       setIsSending(false);

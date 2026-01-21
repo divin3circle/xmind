@@ -1,11 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
+import { useMyAgents } from "@/hooks/useMyAgents";
+import { IconLoader2, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 function Earnings() {
   const router = useRouter();
+  const { agents, loading } = useMyAgents();
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">
       <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
@@ -56,15 +58,21 @@ function Earnings() {
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="flex w-full items-center justify-between py-2">
-          <h1 className="font-sans font-semibold text-sm">Spending</h1>
+          <h1 className="font-sans font-semibold text-sm">Agents</h1>
         </div>
         <div className="mt-4">
           <h1 className="font-sans text-foreground/90 font-bold text-4xl text-center">
-            $245.43
+            {!loading ? (
+              <span className="w-full flex items-center justify-center">
+                <IconLoader2 size={16} className="animate-spin" />
+              </span>
+            ) : (
+              agents?.length || 0
+            )}
           </h1>
           <div className="flex w-full mt-4 items-center justify-between">
             <h1 className="font-sans text-xs font-semibold text-muted-foreground">
-              Spent Tokens
+              Agents Balance
             </h1>
             <p className="font-sans text-xs font-semibold text-muted-foreground">
               4,686.97 USDC.e

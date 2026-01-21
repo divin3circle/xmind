@@ -35,8 +35,6 @@ export function AgentAlertModal({ agent }: AgentAlertModalProps) {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  console.log("Agent in Modal:", agent);
-
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
