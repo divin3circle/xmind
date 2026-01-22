@@ -9,8 +9,6 @@ if (!clientId) {
   );
 }
 
-// thirdweb client for browser-side usage only needs the public clientId; the
-// secret key must stay server-side to avoid leaking credentials.
 export const client = createThirdwebClient({
   clientId,
 });

@@ -78,6 +78,11 @@ export interface AlchemySimulationResult {
   error: string | null;
 }
 
+export interface MainnetBalances {
+  usdc: string;
+  cro: string;
+}
+
 /**
  * Full Alchemy simulation response
  */

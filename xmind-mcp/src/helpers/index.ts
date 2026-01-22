@@ -31,7 +31,16 @@ import {
   TokenExtended,
   getTokens,
 } from "@lifi/sdk";
-import { SimulationResult } from "../types";
+import { MainnetBalances, SimulationResult } from "../types";
+
+export type X402PaymentRequirements = {
+  scheme: string;
+  network: string;
+  payTo: string;
+  asset: string;
+  maxAmountRequired: string;
+  maxTimeoutSeconds: number;
+};
 
 export const getAvailablePools = async (
   protocol: "vvs" | "h2",
@@ -88,6 +97,228 @@ export const getErc20TokenBalance = async (
       `Error fetching ERC20 token balance for wallet ${walletAddress} and token ${tokenAddress}:`,
       error,
     );
+    throw error;
+  }
+};
+
+export const getMainnetWalletBalance = async ({
+  walletAddress,
+}: {
+  walletAddress: string;
+}): Promise<MainnetBalances> => {
+  try {
+    const croBalance = await Wallet.balance(walletAddress);
+    const usdcBalance = await Token.getERC20TokenBalance(
+      walletAddress,
+      "0xc21223249CA28397B4B6541dfFaEcC539BfF0c59",
+    );
+
+    return {
+      cro: croBalance.data.balance,
+      usdc: usdcBalance.data.balance,
+    };
+  } catch (error) {
+    console.error(
+      `Error fetching mainnet wallet balance for address ${walletAddress}:`,
+      error,
+    );
+    throw error;
+  }
+};
+
+export const sendTokenTransaction = async (
+  fromPrivateKey: string,
+  toAddress: string,
+  tokenAddress: string,
+  amount: string,
+) => {
+  try {
+    const provider = new ethers.JsonRpcProvider("https://evm-t3.cronos.org/");
+    const wallet = new ethers.Wallet(fromPrivateKey, provider);
+
+    const erc20Abi = [
+      "function decimals() view returns (uint8)",
+      "function transfer(address to, uint256 amount) returns (bool)",
+    ];
+
+    const contract = new ethers.Contract(tokenAddress, erc20Abi, wallet);
+    const decimals = await contract.decimals();
+    const amountInWei = ethers.parseUnits(amount, decimals);
+
+    const txResponse = await contract.transfer(toAddress, amountInWei);
+    const receipt = await txResponse.wait();
+
+    return {
+      transactionHash: txResponse.hash,
+      receipt,
+    };
+  } catch (error) {
+    console.error(
+      `Error sending token transaction from private key to address ${toAddress}:`,
+      error,
+    );
+    throw error;
+  }
+};
+
+const toBase64 = (value: string): string => {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(value).toString("base64");
+  }
+  if (typeof btoa !== "undefined") {
+    return btoa(value);
+  }
+  throw new Error("Base64 encoding is not available in this environment");
+};
+
+export const handleX402Payment = async ({
+  resourceUrl,
+  privateKey,
+  method = "GET",
+  requestData,
+}: {
+  resourceUrl: string;
+  privateKey: string;
+  method?: string;
+  requestData?: unknown;
+}): Promise<unknown> => {
+  try {
+    const options: RequestInit = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    if (requestData && (method === "POST" || method === "PUT")) {
+      options.body = JSON.stringify(requestData);
+    }
+
+    let response = await fetch(resourceUrl, options);
+
+    if (response.status !== 402) {
+      return response.json();
+    }
+
+    const responseData = (await response.json()) as {
+      paymentRequirements?: X402PaymentRequirements;
+    };
+    const { paymentRequirements } = responseData;
+
+    if (!paymentRequirements) {
+      throw new Error("No paymentRequirements in 402 response");
+    }
+
+    const paymentHeader = await createX402PaymentHeader({
+      privateKey,
+      paymentRequirements,
+    });
+
+    const retryOptions: RequestInit = {
+      ...options,
+      headers: {
+        ...options.headers,
+        "X-PAYMENT": paymentHeader,
+      },
+    };
+
+    response = await fetch(resourceUrl, retryOptions);
+
+    if (!response.ok) {
+      throw new Error(
+        `Request failed with status ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error handling X402 payment flow:", error);
+    throw error;
+  }
+};
+
+export const createX402PaymentHeader = async ({
+  privateKey,
+  paymentRequirements,
+  rpcUrl = "https://evm-t3.cronos.org/",
+}: {
+  privateKey: string;
+  paymentRequirements: X402PaymentRequirements;
+  rpcUrl?: string;
+}): Promise<string> => {
+  try {
+    const {
+      payTo,
+      asset,
+      maxAmountRequired,
+      maxTimeoutSeconds,
+      scheme,
+      network,
+    } = paymentRequirements;
+
+    if (!ethers.isAddress(payTo)) {
+      throw new Error("Invalid payTo address in payment requirements");
+    }
+
+    if (!ethers.isAddress(asset)) {
+      throw new Error("Invalid asset address in payment requirements");
+    }
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const chain = await provider.getNetwork();
+    const chainId = Number(chain.chainId);
+
+    const now = Math.floor(Date.now() / 1000);
+    const validAfter = 0;
+    const validBefore = now + (maxTimeoutSeconds ?? 300);
+    const nonce = ethers.hexlify(ethers.randomBytes(32));
+
+    const domain = {
+      name: "Bridged USDC (Stargate)",
+      version: "1",
+      chainId,
+      verifyingContract: asset,
+    } as const;
+
+    const types = {
+      TransferWithAuthorization: [
+        { name: "from", type: "address" },
+        { name: "to", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "validAfter", type: "uint256" },
+        { name: "validBefore", type: "uint256" },
+        { name: "nonce", type: "bytes32" },
+      ],
+    };
+
+    const messageToSign = {
+      from: wallet.address,
+      to: payTo,
+      value: BigInt(maxAmountRequired),
+      validAfter,
+      validBefore,
+      nonce,
+    } as const;
+
+    const signature = await wallet.signTypedData(domain, types, messageToSign);
+
+    const paymentHeader = {
+      x402Version: 1,
+      scheme,
+      network,
+      payload: {
+        ...messageToSign,
+        value: maxAmountRequired,
+        signature,
+        asset,
+      },
+    };
+
+    const headerJson = JSON.stringify(paymentHeader);
+    return toBase64(headerJson);
+  } catch (error) {
+    console.error("Error creating X402 payment header:", error);
     throw error;
   }
 };

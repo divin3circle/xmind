@@ -22,6 +22,10 @@ import {
   getTokenDetails,
   getChainTokenBySymbol,
   simulateTransaction,
+  getMainnetWalletBalance,
+  sendTokenTransaction,
+  createX402PaymentHeader,
+  handleX402Payment,
 } from "./helpers";
 import { Client, CronosEvm } from "@crypto.com/developer-platform-client";
 import { createConfig } from "@lifi/sdk";
@@ -56,11 +60,59 @@ export class MyMCP extends McpAgent {
     );
 
     this.server.tool(
+      "get_mainnet_wallet_balance",
+      "Get mainnet wallet balance for CRO and USDC tokens",
+      {
+        walletAddress: z
+          .string()
+          .describe("The wallet address to check balance for"),
+      },
+      async ({ walletAddress }) => {
+        const balances = await getMainnetWalletBalance({ walletAddress });
+        return {
+          content: [{ type: "text", text: JSON.stringify(balances) }],
+        };
+      },
+    );
+
+    this.server.tool(
+      "send_tokens_testnet",
+      "Send test tokens (TCRO and USDCe) on Cronos Testnet to a specified wallet address.",
+      {
+        fromPrivateKey: z
+          .string()
+          .describe("The private key of the sender's wallet"),
+        toAddress: z
+          .string()
+          .describe("The recipient's wallet address starting with 0x"),
+        tokenAddress: z
+          .string()
+          .describe(
+            "The token contract address (TCRO or USDCe) on Cronos Testnet",
+          ),
+        amount: z
+          .string()
+          .describe("The amount of tokens to send in normal decimal units"),
+      },
+      async ({ fromPrivateKey, toAddress, tokenAddress, amount }) => {
+        const data = await sendTokenTransaction(
+          fromPrivateKey,
+          toAddress,
+          tokenAddress,
+          amount,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(data) }],
+        };
+      },
+    );
+
+    this.server.tool(
       "get_farm_by_symbol",
       "Get farm details by LP symbol from Cronos DeFi protocols(H2 or VVS).",
       {
-        protocol: z.enum(["vvs", "h2"]),
-        symbol: z.string(),
+        protocol: z.enum(["vvs", "h2"]).describe("The DeFi protocol to query"),
+        symbol: z.string().describe("The LP symbol of the farm to retrieve"),
       },
       async ({ protocol, symbol }) => {
         const farm = await getFarmBySymbol(protocol, symbol);
@@ -126,13 +178,17 @@ export class MyMCP extends McpAgent {
       async ({ identifier }) => {
         const balanceResponse =
           await getWalletAddressOrCronosIdBalance(identifier);
+        const balanceMessage =
+          Number(balanceResponse.data.balance) <= 1
+            ? " TCRO(testnet) - Low balance, consider topping up!"
+            : " TCRO(testnet)";
         return {
           content: [
             {
               type: "text",
               text: `Balance for ${identifier}: ${JSON.stringify(
                 balanceResponse.data,
-              )} TCRO(testnet)`,
+              )} ${balanceMessage}`,
             },
           ],
         };
@@ -398,6 +454,91 @@ export class MyMCP extends McpAgent {
         const tokenDetails = await getTokenDetails(chainId, tokenAddress);
         return {
           content: [{ type: "text", text: JSON.stringify(tokenDetails) }],
+        };
+      },
+    );
+
+    this.server.tool(
+      "sign_x402_payment_header",
+      "Sign an X402 payment requirement using EIP-3009 with the agent's private key and return the Base64 X-PAYMENT header.",
+      {
+        privateKey: z
+          .string()
+          .describe("The private key used to sign the authorization"),
+        paymentRequirements: z
+          .object({
+            scheme: z.string(),
+            network: z.string(),
+            payTo: z.string(),
+            asset: z.string(),
+            maxAmountRequired: z.string(),
+            maxTimeoutSeconds: z.number(),
+          })
+          .describe("Payment requirements received from the 402 response"),
+        rpcUrl: z
+          .string()
+          .url()
+          .optional()
+          .describe(
+            "Optional RPC URL to resolve chainId; defaults to Cronos testnet",
+          ),
+      },
+      async ({ privateKey, paymentRequirements, rpcUrl }) => {
+        const header = await createX402PaymentHeader({
+          privateKey,
+          paymentRequirements,
+          rpcUrl,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: header,
+            },
+          ],
+        };
+      },
+    );
+
+    this.server.tool(
+      "handle_x402_payment",
+      "Automatically handle X402 payment-required flow: detects 402 response, signs payment authorization, and retries request with X-PAYMENT header.",
+      {
+        resourceUrl: z
+          .string()
+          .url()
+          .describe("The URL of the protected resource"),
+        privateKey: z
+          .string()
+          .describe("The agent's private key for signing the authorization"),
+        method: z
+          .enum(["GET", "POST", "PUT"])
+          .optional()
+          .default("GET")
+          .describe("HTTP method to use"),
+        requestData: z
+          .unknown()
+          .optional()
+          .describe(
+            "Request body data for POST/PUT requests (will be JSON stringified)",
+          ),
+      },
+      async ({ resourceUrl, privateKey, method, requestData }) => {
+        const result = await handleX402Payment({
+          resourceUrl,
+          privateKey,
+          method,
+          requestData,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result),
+            },
+          ],
         };
       },
     );
