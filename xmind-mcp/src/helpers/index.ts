@@ -40,7 +40,15 @@ export type X402PaymentRequirements = {
   asset: string;
   maxAmountRequired: string;
   maxTimeoutSeconds: number;
+  description?: string;
+  mimeType?: string;
 };
+
+const X402_FACILITATOR_URL =
+  process.env.X402_FACILITATOR_URL ||
+  "https://facilitator.cronoslabs.org/v2/x402";
+const X402_SELLER_WALLET = "0x28eEE4B42810A2E138Dc41ef00901e93Fb88a19a";
+const X402_USDCE_TESTNET = "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0";
 
 export const getAvailablePools = async (
   protocol: "vvs" | "h2",
@@ -126,6 +134,19 @@ export const getMainnetWalletBalance = async ({
   }
 };
 
+export const getDefaultSellerPaymentRequirements =
+  (): X402PaymentRequirements => ({
+    scheme: "exact",
+    network: "cronos-testnet",
+    payTo: X402_SELLER_WALLET,
+    asset: X402_USDCE_TESTNET,
+    description: "Access paid farm pools",
+    mimeType: "application/json",
+    // 0.1 USDC.e (6 decimals)
+    maxAmountRequired: "100000",
+    maxTimeoutSeconds: 300,
+  });
+
 export const sendTokenTransaction = async (
   fromPrivateKey: string,
   toAddress: string,
@@ -169,6 +190,89 @@ const toBase64 = (value: string): string => {
     return btoa(value);
   }
   throw new Error("Base64 encoding is not available in this environment");
+};
+
+export type X402VerificationResult = {
+  isValid: boolean;
+  settled: boolean;
+  txHash?: string;
+  invalidReason?: string;
+  settleError?: string;
+  rawVerify?: unknown;
+  rawSettle?: unknown;
+};
+
+export const verifyAndSettleX402Payment = async ({
+  paymentHeader,
+  paymentRequirements,
+  facilitatorUrl = X402_FACILITATOR_URL,
+}: {
+  paymentHeader: string;
+  paymentRequirements: X402PaymentRequirements;
+  facilitatorUrl?: string;
+}): Promise<X402VerificationResult> => {
+  const payload = {
+    x402Version: 1,
+    paymentHeader,
+    paymentRequirements,
+  } as const;
+
+  const headers = {
+    "Content-Type": "application/json",
+    "X402-Version": "1",
+  } as const;
+
+  try {
+    const verifyRes = await fetch(`${facilitatorUrl}/verify`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const verifyJson = (await verifyRes.json()) as {
+      isValid?: boolean;
+      invalidReason?: string;
+      [key: string]: unknown;
+    };
+
+    if (!verifyRes.ok || verifyJson?.isValid === false) {
+      return {
+        isValid: false,
+        settled: false,
+        invalidReason:
+          verifyJson?.invalidReason ||
+          verifyRes.statusText ||
+          "Invalid payment",
+        rawVerify: verifyJson,
+      };
+    }
+
+    const settleRes = await fetch(`${facilitatorUrl}/settle`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const settleJson = (await settleRes.json()) as {
+      event?: string;
+      txHash?: string;
+      error?: string;
+      [key: string]: unknown;
+    };
+    const settled = settleJson?.event === "payment.settled";
+
+    return {
+      isValid: true,
+      settled,
+      txHash: settleJson?.txHash,
+      settleError: settled ? undefined : settleJson?.error,
+      rawVerify: verifyJson,
+      rawSettle: settleJson,
+    };
+  } catch (error) {
+    console.error("Error verifying/settling X402 payment:", error);
+    throw error;
+  }
 };
 
 export const handleX402Payment = async ({
@@ -247,7 +351,7 @@ export const createX402PaymentHeader = async ({
   rpcUrl?: string;
 }): Promise<string> => {
   try {
-    const {
+    let {
       payTo,
       asset,
       maxAmountRequired,
@@ -255,6 +359,12 @@ export const createX402PaymentHeader = async ({
       scheme,
       network,
     } = paymentRequirements;
+
+    // Normalize network string: "Cronos Testnet" → "cronos-testnet"
+    network = network
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace("testnet", "testnet");
 
     if (!ethers.isAddress(payTo)) {
       throw new Error("Invalid payTo address in payment requirements");

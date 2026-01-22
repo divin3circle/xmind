@@ -26,6 +26,8 @@ import {
   sendTokenTransaction,
   createX402PaymentHeader,
   handleX402Payment,
+  getDefaultSellerPaymentRequirements,
+  verifyAndSettleX402Payment,
 } from "./helpers";
 import { Client, CronosEvm } from "@crypto.com/developer-platform-client";
 import { createConfig } from "@lifi/sdk";
@@ -132,14 +134,86 @@ export class MyMCP extends McpAgent {
       },
     );
 
+    // this.server.tool(
+    //   "get_tickers",
+    //   "Get all tickers from Crypto.com Exchange",
+    //   {},
+    //   async () => {
+    //     const tickers = await getAllTickers();
+    //     return {
+    //       content: [{ type: "text", text: JSON.stringify(tickers.data) }],
+    //     };
+    //   },
+    // );
+
     this.server.tool(
-      "get_tickers",
-      "Get all tickers from Crypto.com Exchange",
-      {},
-      async () => {
+      "get_paid_tickers",
+      "Paid access to exchange tickers. Returns payment requirements if header missing; verifies and settles X402 payment when provided.",
+      {
+        paymentHeader: z
+          .string()
+          .optional()
+          .describe(
+            "Base64 X-PAYMENT header. Leave empty to receive payment requirements.",
+          ),
+      },
+      async ({ paymentHeader }) => {
+        const paymentRequirements = getDefaultSellerPaymentRequirements();
+
+        if (!paymentHeader) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  requiresPayment: true,
+                  paymentRequirements,
+                }),
+              },
+            ],
+          };
+        }
+
+        const verification = await verifyAndSettleX402Payment({
+          paymentHeader,
+          paymentRequirements,
+        });
+
+        if (!verification.isValid || !verification.settled) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  requiresPayment: true,
+                  reason:
+                    verification.invalidReason ||
+                    verification.settleError ||
+                    "Payment invalid or not settled",
+                  paymentRequirements,
+                }),
+              },
+            ],
+          };
+        }
+
         const tickers = await getAllTickers();
+
         return {
-          content: [{ type: "text", text: JSON.stringify(tickers.data) }],
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                requiresPayment: false,
+                payment: {
+                  txHash: verification.txHash,
+                  rawVerify: verification.rawVerify,
+                  rawSettle: verification.rawSettle,
+                },
+                data: tickers.data,
+              }),
+            },
+          ],
         };
       },
     );
@@ -163,6 +237,83 @@ export class MyMCP extends McpAgent {
               text: `Token ${tokenAddress} is ${
                 isWhitelisted ? "" : "not "
               }whitelisted on protocol ${protocol}`,
+            },
+          ],
+        };
+      },
+    );
+
+    this.server.tool(
+      "get_paid_farm_pools",
+      "Paid access to farm pools. Returns payment requirements if header missing; verifies and settles X402 payment when provided.",
+      {
+        paymentHeader: z
+          .string()
+          .optional()
+          .describe(
+            "Base64 X-PAYMENT header. Leave empty to receive payment requirements.",
+          ),
+        protocol: z
+          .enum(["vvs", "h2"])
+          .optional()
+          .default("vvs")
+          .describe("DeFi protocol to fetch pools from"),
+      },
+      async ({ paymentHeader, protocol }) => {
+        const paymentRequirements = getDefaultSellerPaymentRequirements();
+
+        if (!paymentHeader) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  requiresPayment: true,
+                  paymentRequirements,
+                }),
+              },
+            ],
+          };
+        }
+
+        const verification = await verifyAndSettleX402Payment({
+          paymentHeader,
+          paymentRequirements,
+        });
+
+        if (!verification.isValid || !verification.settled) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  requiresPayment: true,
+                  reason:
+                    verification.invalidReason ||
+                    verification.settleError ||
+                    "Payment invalid or not settled",
+                  paymentRequirements,
+                }),
+              },
+            ],
+          };
+        }
+
+        const pools = await getAvailablePools(protocol);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                requiresPayment: false,
+                payment: {
+                  txHash: verification.txHash,
+                  rawVerify: verification.rawVerify,
+                  rawSettle: verification.rawSettle,
+                },
+                data: pools.data,
+              }),
             },
           ],
         };

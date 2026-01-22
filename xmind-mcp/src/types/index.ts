@@ -48,7 +48,7 @@ export interface SimulationResult {
   gasEstimate: string | null;
   returnData?: string;
   revertReason?: string;
-  assetDeltas: AssetChange[]; // best-effort decoded asset movements; may be empty when decoding is not possible
+  assetDeltas: AssetChange[];
 }
 
 /**

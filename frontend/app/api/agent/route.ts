@@ -53,7 +53,7 @@ export async function POST(request: Request) {
           asset: USDCE_CONTRACT,
           description: `Access to premium data from agent ${agentId}`,
           mimeType: "application/json",
-          maxAmountRequired: "100", // 0.0001 USDC.e with 6 decimals
+          maxAmountRequired: "10000",
           maxTimeoutSeconds: 300,
         },
       },

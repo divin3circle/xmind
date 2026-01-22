@@ -31,6 +31,7 @@ const config = {
     : "0",
   NEXT_PUBLIC_AGENT_FACTORY_OWNER:
     process.env.NEXT_PUBLIC_AGENT_FACTORY_OWNER || "",
+  CONTEXT: process.env.CONTEXT || "",
 };
 
 function getAppUrl() {

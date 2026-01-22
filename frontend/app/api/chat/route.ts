@@ -22,13 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch agent from database
     const agent = await Agents.findOne({ _id: agentId });
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    // Determine which API key to use
     const geminiApiKey = agent.geminiKey || FALLBACK_GEMINI_API_KEY;
     let usingAgentKey = !!agent.geminiKey;
 
@@ -40,14 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     // TODO: Check agent's USDC balance and bill if using fallback key
-    // For now, we'll just proceed with the key
-
-    // Initialize Gemini AI
     let ai;
     try {
       ai = new GoogleGenAI({ apiKey: geminiApiKey });
     } catch (error) {
-      // If agent's key is invalid, try fallback
       console.error("Error initializing Gemini AI:", error);
       if (usingAgentKey && FALLBACK_GEMINI_API_KEY) {
         console.warn("Agent's Gemini key invalid, using fallback");
@@ -61,7 +55,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch or create chat history
     const lowerAgentId = agentId.toLowerCase().trim();
     const lowerUserAddress = userAddress.toLowerCase().trim();
 
@@ -70,10 +63,19 @@ export async function POST(request: NextRequest) {
       userAddress: lowerUserAddress,
     });
 
-    // Build conversation history
     const conversationHistory = [];
 
-    // Add system prompt from agent with agent self-awareness
+    // Extract X402 payment header from user message for session-wide reuse
+    // Header looks like: "eyJ..." (Base64) and is valid for 5 minutes across all paid requests
+    let x402Header: string | null = null;
+    const headerMatch = message.match(/x402[:\s]+([A-Za-z0-9+/=]+)/i);
+    if (headerMatch && headerMatch[1]) {
+      x402Header = headerMatch[1];
+      console.log(
+        "X402 header extracted from user message, will reuse for all paid API calls",
+      );
+    }
+
     if (agent.systemPrompt) {
       const agentDetails = {
         name: agent.name,
@@ -93,7 +95,16 @@ export async function POST(request: NextRequest) {
 Agent Self-Info:
 ${JSON.stringify(agentDetails, null, 2)}
 
-Important: You have access to your own wallet address (${agent.walletAddress}), smart contract (${agent.contractAddress}), creator address (${agent.creatorAddress}), creation transaction hash (${agent.creationTxHash}) among other details from your Agent Self-Info above. `;
+PAYMENT PROTOCOL (X402):
+- Some endpoints (get_paid_farm_pools, get_paid_tickers) require payment: 0.1 USDC.e on Cronos testnet
+- If user needs paid data, ASK THEM UPFRONT for an X402 payment header
+- User can obtain header by calling: sign_x402_payment_header with their private key
+- Once user provides the header, you will REUSE IT AUTOMATICALLY for all paid requests (valid for 5 minutes)
+- NO NEED TO ASK AGAIN - one header pays for multiple API calls
+- Format: when user provides header, include it in subsequent paid tool calls
+- This is WAY better UX than asking for payment per request!
+
+Important: You have access to your own wallet address (${agent.walletAddress}), smart contract (${agent.contractAddress}), creator address (${agent.creatorAddress}), creation transaction hash (${agent.creationTxHash}) among other details from your Agent Self-Info above. ${config.CONTEXT}`;
 
       conversationHistory.push({
         role: "user",
@@ -109,7 +120,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       });
     }
 
-    // Add recent actions performed by agent as context
     if (agent.actions && agent.actions.length > 0) {
       const recentActions = agent.actions.slice(-5);
       const actionsContext = recentActions
@@ -133,7 +143,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       });
     }
 
-    // Add previous chat messages
     if (chat && chat.messages && chat.messages.length > 0) {
       const recentMessages = chat.messages.slice(-10); // Last 10 messages
 
@@ -145,16 +154,13 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       }
     }
 
-    // Add current user message
     conversationHistory.push({
       role: "user",
       parts: [{ text: message }],
     });
 
-    // Get MCP tools
     const mcpTools = await listMcpTools();
 
-    // Generate response with Gemini
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
       contents: conversationHistory,
@@ -168,7 +174,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       },
     });
 
-    // Handle tool calls
     const toolResults: { toolName: string | undefined; result: unknown }[] = [];
     const toolCalls = response.functionCalls || [];
 
@@ -176,16 +181,23 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       for (const call of toolCalls) {
         console.log(`Executing tool: ${call.name}`, call.args);
         try {
-          const result = await callMcpTool(
-            call.name ?? "",
-            call.args as Record<string, unknown>,
-          );
+          let toolArgs: Record<string, unknown> = call.args as Record<
+            string,
+            unknown
+          >;
+          const paidTools = ["get_paid_farm_pools", "get_paid_tickers"];
+
+          if (x402Header && paidTools.includes(call.name ?? "")) {
+            console.log(`Auto-injecting X402 header into ${call.name}`);
+            toolArgs = { ...toolArgs, paymentHeader: x402Header };
+          }
+
+          const result = await callMcpTool(call.name ?? "", toolArgs);
           toolResults.push({
             toolName: call.name,
             result: result,
           });
 
-          // Log this action to the agent's actions array
           if (call.name) {
             await Agents.findOneAndUpdate(
               { contractAddress: agentId },
@@ -195,7 +207,7 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
                     title: call.name,
                     body: JSON.stringify(call.args),
                     ranAt: new Date(),
-                    usdceConsumed: 0, // TODO: Calculate actual cost
+                    usdceConsumed: 0.001, // TODO: Calculate actual cost
                   },
                 },
                 $inc: { tasksRan: 1 },
@@ -212,7 +224,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       }
     }
 
-    // Generate final response with tool results
     let finalResponse = response.text ?? "";
 
     if (toolResults.length > 0) {
@@ -241,7 +252,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
       finalResponse = finalRes.text ?? "";
     }
 
-    // Save chat to database
     if (!chat) {
       chat = new AgentChat({
         agentId: lowerAgentId,
@@ -275,7 +285,6 @@ Important: You have access to your own wallet address (${agent.walletAddress}), 
   } catch (error) {
     console.error("Error in chat endpoint:", error);
 
-    // Check if it's a quota/rate limit error
     const errorObj = error as { status?: number; message?: string };
     const isQuotaError =
       errorObj?.status === 429 ||

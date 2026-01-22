@@ -68,7 +68,7 @@ export function ChatMessages({
                 : "bg-muted/50"
             }`}
           >
-            <div className="text-xs font-sans">
+            <div className="text-xs font-sans wrap-break-word">
               {formatMessage(msg.content)}
             </div>
             <div className="text-[10px] text-muted-foreground mt-2">
