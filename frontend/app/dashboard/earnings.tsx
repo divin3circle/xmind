@@ -62,7 +62,7 @@ function Earnings() {
         </div>
         <div className="mt-4">
           <h1 className="font-sans text-foreground/90 font-bold text-4xl text-center">
-            {!loading ? (
+            {loading ? (
               <span className="w-full flex items-center justify-center">
                 <IconLoader2 size={16} className="animate-spin" />
               </span>

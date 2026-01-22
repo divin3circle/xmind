@@ -23,11 +23,12 @@ import {
   getChainTokenBySymbol,
   simulateTransaction,
 } from "./helpers";
-import { Client } from "@crypto.com/developer-platform-client";
+import { Client, CronosEvm } from "@crypto.com/developer-platform-client";
 import { createConfig } from "@lifi/sdk";
 
 Client.init({
   apiKey: env.CRYPTO_COM_API_KEY,
+  provider: "https://evm-t3.cronos.org/",
 });
 
 export class MyMCP extends McpAgent {
@@ -131,7 +132,7 @@ export class MyMCP extends McpAgent {
               type: "text",
               text: `Balance for ${identifier}: ${JSON.stringify(
                 balanceResponse.data,
-              )}`,
+              )} TCRO(testnet)`,
             },
           ],
         };

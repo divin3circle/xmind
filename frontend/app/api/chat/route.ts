@@ -4,8 +4,9 @@ import { AgentChat } from "@/lib/models/AgentChat";
 import { Agents } from "@/lib/models/Agents";
 import { GoogleGenAI, FunctionCallingConfigMode } from "@google/genai";
 import { listMcpTools, callMcpTool } from "@/client/agent";
+import config from "@/config/env";
 
-const FALLBACK_GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const FALLBACK_GEMINI_API_KEY = config.GEMINI_API_KEY;
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,15 +73,39 @@ export async function POST(request: NextRequest) {
     // Build conversation history
     const conversationHistory = [];
 
-    // Add system prompt from agent
+    // Add system prompt from agent with agent self-awareness
     if (agent.systemPrompt) {
+      const agentDetails = {
+        name: agent.name,
+        contractAddress: agent.contractAddress,
+        walletAddress: agent.walletAddress,
+        description: agent.description,
+        id: agent._id,
+        createdAt: agent.createdAt,
+        tasksRan: agent.tasksRan,
+        earnings: agent.earnings,
+        creatorAddress: agent.creatorAddress,
+        creationTxHash: agent.transactionHash,
+      };
+
+      const systemMessage = `System instructions: ${agent.systemPrompt}
+
+Agent Self-Info:
+${JSON.stringify(agentDetails, null, 2)}
+
+Important: You have access to your own wallet address (${agent.walletAddress}), smart contract (${agent.contractAddress}), creator address (${agent.creatorAddress}), creation transaction hash (${agent.creationTxHash}) among other details from your Agent Self-Info above. `;
+
       conversationHistory.push({
         role: "user",
-        parts: [{ text: `System instructions: ${agent.systemPrompt}` }],
+        parts: [{ text: systemMessage }],
       });
       conversationHistory.push({
         role: "model",
-        parts: [{ text: "Understood. I will follow these instructions." }],
+        parts: [
+          {
+            text: "Understood. I will follow these instructions and I'm aware of my details and capabilities. I can use my own walletAddress to check my balance and other account details.",
+          },
+        ],
       });
     }
 

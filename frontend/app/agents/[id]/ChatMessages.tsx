@@ -1,5 +1,4 @@
 import React from "react";
-import { IconLoader2 } from "@tabler/icons-react";
 import { ChatMessage } from "@/hooks/useAgentChat";
 
 const formatMessage = (content: string) => {
@@ -56,7 +55,7 @@ export function ChatMessages({
   bottomRef,
 }: ChatMessagesProps) {
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
       {messages.map((msg, idx) => (
         <div
           key={idx}
@@ -82,7 +81,17 @@ export function ChatMessages({
       {isSending && (
         <div className="flex justify-start">
           <div className="max-w-[75%] border border-dashed p-3 bg-muted/50">
-            <IconLoader2 className="animate-spin size-4" />
+            <div className="text-xs font-sans flex items-center gap-2">
+              <span className=" animate-bounce delay-0 text-lg font-semibold">
+                .
+              </span>
+              <span className="animate-bounce delay-100 text-lg font-semibold">
+                .
+              </span>
+              <span className="animate-bounce delay-200 text-lg font-semibold">
+                .
+              </span>
+            </div>
           </div>
         </div>
       )}

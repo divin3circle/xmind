@@ -3,6 +3,8 @@ const config = {
   PORT: process.env.PORT || 3000,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || "",
   THIRDWEB_SECRET_KEY: process.env.THIRDWEB_SECRET_KEY,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
+  GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
   SERVER_WALLET_ADDRESS: process.env.SERVER_WALLET_ADDRESS || "",
   APP_URL: getAppUrl(),

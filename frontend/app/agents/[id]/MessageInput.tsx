@@ -20,7 +20,7 @@ export function MessageInput({
   return (
     <div className="px-4 pb-4">
       <div className="flex gap-2">
-        <div className="flex-1 border border-dashed p-1">
+        <div className="flex-1 border border-dashed p-1 backdrop-blur-sm">
           <Input
             placeholder={placeholder}
             className="bg-background h-10 border-none"

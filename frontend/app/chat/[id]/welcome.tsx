@@ -14,7 +14,6 @@ import { useTemplates } from "@/hooks/useTemplates";
 const formatMessage = (content: string) => {
   const lines = content.split("\n");
   return lines.map((line, idx) => {
-    // Handle bullet points
     if (line.trim().startsWith("* ") || line.trim().startsWith("- ")) {
       const bulletContent = line.replace(/^[\s]*[*-]\s/, "");
       return (

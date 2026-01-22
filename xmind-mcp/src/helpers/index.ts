@@ -8,6 +8,7 @@ import {
   CronosId,
   Contract,
 } from "@crypto.com/developer-platform-client";
+import { ethers } from "ethers";
 import { ApiResponse } from "@crypto.com/developer-platform-client/dist/integrations/api.interfaces";
 import { ContractCode } from "@crypto.com/developer-platform-client/dist/lib/client/interfaces/contract.interfaces";
 import {
@@ -63,13 +64,25 @@ export const checkIfTokenIsWhitelistedOnProtocol = async (
 export const getErc20TokenBalance = async (
   walletAddress: string,
   tokenAddress: string,
-): Promise<ApiResponse<{ balance: string }>> => {
+): Promise<{ data: { balance: string }; message: string }> => {
   try {
-    const balance = await Token.getERC20TokenBalance(
-      walletAddress,
-      tokenAddress,
-    );
-    return balance;
+    const provider = new ethers.JsonRpcProvider("https://evm-t3.cronos.org/");
+
+    const erc20Abi = [
+      "function balanceOf(address owner) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+    ];
+
+    const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+    const balanceInWei = await contract.balanceOf(walletAddress);
+    const decimals = await contract.decimals();
+
+    const balanceFormatted = ethers.formatUnits(balanceInWei, decimals);
+
+    return {
+      data: { balance: balanceFormatted },
+      message: "Success",
+    };
   } catch (error) {
     console.error(
       `Error fetching ERC20 token balance for wallet ${walletAddress} and token ${tokenAddress}:`,
@@ -175,10 +188,16 @@ export const resolveAddressToCronosId = async (
 
 export const getWalletAddressOrCronosIdBalance = async (
   identifier: string,
-): Promise<ApiResponse<{ balance: string }>> => {
+): Promise<{ data: { balance: string }; message: string }> => {
   try {
-    const balance = await Wallet.balance(identifier);
-    return balance;
+    const provider = new ethers.JsonRpcProvider("https://evm-t3.cronos.org/");
+    const balanceInWei = await provider.getBalance(identifier);
+    const balanceInCro = ethers.formatEther(balanceInWei);
+
+    return {
+      data: { balance: balanceInCro },
+      message: "Success",
+    };
   } catch (error) {
     console.error(
       `Error fetching balance for identifier ${identifier}:`,

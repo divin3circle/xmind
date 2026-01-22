@@ -1,12 +1,15 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SheetDetails } from "./AgentDetails";
+import { AgentAlertModal } from "./AgentAlertModal";
+import { Agent } from "@/lib/utils";
 
 interface ChatHeaderProps {
   name: string;
   image: string;
   contractAddress: string;
   onExit: () => void;
+  agent: Agent;
 }
 
 export function ChatHeader({
@@ -14,6 +17,7 @@ export function ChatHeader({
   image,
   contractAddress,
   onExit,
+  agent,
 }: ChatHeaderProps) {
   return (
     <div className="border-b border-dashed p-4 flex items-center justify-between">
@@ -33,6 +37,7 @@ export function ChatHeader({
             {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
           </p>
         </div>
+        <AgentAlertModal agent={agent} />
       </div>
       <div className="flex items-center gap-2">
         <SheetDetails />

@@ -157,6 +157,7 @@ export function AgentWelcome({ agentId }: AgentWelcomeProps) {
           image={agent.image}
           contractAddress={agent.contractAddress || ""}
           onExit={() => router.push("/dashboard")}
+          agent={agent}
         />
 
         <ChatMessages
