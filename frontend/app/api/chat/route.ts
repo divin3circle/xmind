@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
 
     console.log("Chat count.....", chatCount);
 
-    if (chatCount >= 200) {
-      // TODO: Remove hardcoded limit
+    if (chatCount >= MESSAGES_PER_AGENT_PER_USER) {
       return NextResponse.json(
         {
           error: `You have reached the limit of ${MESSAGES_PER_AGENT_PER_USER} messages per agent.`,

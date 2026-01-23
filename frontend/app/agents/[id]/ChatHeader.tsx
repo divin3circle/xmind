@@ -40,7 +40,7 @@ export function ChatHeader({
         <AgentAlertModal agent={agent} />
       </div>
       <div className="flex items-center gap-2">
-        <SheetDetails />
+        <SheetDetails agentId={agent._id} />
         <Button
           variant="outline"
           size="sm"
