@@ -564,10 +564,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Built with ❤️ for Cronos x402 Paytech Hackathon 2026
 
-- **Project Lead**: [Your Name]
-- **Smart Contract Developer**: [Your Name]
-- **Frontend Developer**: [Your Name]
-- **MCP Server Developer**: [Your Name]
+- **Project Lead**: [Sylus Abel]
+- **Smart Contract Developer**: [Samuel Musuu]
+- **Frontend Developer**: [Sylus Abel]
+- **MCP Server Developer**: [Ian Mongare]
 
 ---
 
@@ -584,9 +584,9 @@ Built with ❤️ for Cronos x402 Paytech Hackathon 2026
 
 ## 📞 Contact & Links
 
-- **Website**: [Your deployed website]
+- **Website**: [https://xmind-dusky.vercel.app/]
 - **GitHub**: https://github.com/divin3circle/bazaar
-- **Twitter**: [@your_handle]
+- **Twitter**: [@the_sylus]
 - **Demo Video**: [YouTube link]
 - **Documentation**: [Notion/GitBook link]
 
