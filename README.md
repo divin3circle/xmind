@@ -587,7 +587,7 @@ Built with ❤️ for Cronos x402 Paytech Hackathon 2026
 - **Website**: [https://xmind-dusky.vercel.app/]
 - **GitHub**: https://github.com/divin3circle/xMind
 - **Twitter**: [@the_sylus]
-- **Demo Video**: [YouTube link]
+- **Demo Video**: [https://www.loom.com/share/74abf448ef7f47b79e72d960664100f0]
 - **Documentation**: [Notion/GitBook link]
 
 ---
