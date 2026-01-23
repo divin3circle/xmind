@@ -30,7 +30,7 @@ export default function RootLayout({
     <ThirdWeb>
       <html lang="en" className={figtree.variable}>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}
         >
           {children}
           <Toaster position="top-right" />
