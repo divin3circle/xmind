@@ -28,7 +28,7 @@ export function SheetDetails({ agentId }: SheetDetailsProps) {
       <SheetContent className="pl-2">
         <SheetHeader>
           <SheetTitle>Agent Actions</SheetTitle>
-          <SheetDescription>See what you agent has been upto.</SheetDescription>
+          <SheetDescription>See what your agent has been up to.</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-3">
           {loading && (
@@ -69,7 +69,14 @@ export function SheetDetails({ agentId }: SheetDetailsProps) {
                     : undefined
                 }
               />
-              <DetailRow label="Created" value={agent.createdAt || ""} />
+              <DetailRow
+                label="Created"
+                value={
+                  agent.createdAt instanceof Date
+                    ? agent.createdAt.toISOString()
+                    : agent.createdAt
+                }
+              />
             </div>
           )}
         </div>
