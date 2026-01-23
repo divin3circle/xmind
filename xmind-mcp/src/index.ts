@@ -611,21 +611,11 @@ export class MyMCP extends McpAgent {
 
     this.server.tool(
       "sign_x402_payment_header",
-      "Sign an X402 payment requirement using EIP-3009 with the agent's private key and return the Base64 X-PAYMENT header.",
+      "Generate an X402 payment header by fetching payment requirements from the facilitator and signing with the agent's private key. Returns Base64 X-PAYMENT header ready to use.",
       {
         privateKey: z
           .string()
           .describe("The private key used to sign the authorization"),
-        paymentRequirements: z
-          .object({
-            scheme: z.string(),
-            network: z.string(),
-            payTo: z.string(),
-            asset: z.string(),
-            maxAmountRequired: z.string(),
-            maxTimeoutSeconds: z.number(),
-          })
-          .describe("Payment requirements received from the 402 response"),
         rpcUrl: z
           .string()
           .url()
@@ -634,10 +624,9 @@ export class MyMCP extends McpAgent {
             "Optional RPC URL to resolve chainId; defaults to Cronos testnet",
           ),
       },
-      async ({ privateKey, paymentRequirements, rpcUrl }) => {
+      async ({ privateKey, rpcUrl }) => {
         const header = await createX402PaymentHeader({
           privateKey,
-          paymentRequirements,
           rpcUrl,
         });
 

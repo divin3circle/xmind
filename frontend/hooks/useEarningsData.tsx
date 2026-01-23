@@ -1,7 +1,6 @@
 import config from "@/config/env";
 import { ethers } from "ethers";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useActiveAccount } from "thirdweb/react";
 import { useMyAgents } from "./useMyAgents";
 
@@ -32,9 +31,7 @@ export const useEarningsData = () => {
 
   const fetchUsdcBalance = async () => {
     if (!activeAccount?.address) {
-      return toast.error(
-        "No active account found. Please connect your wallet.",
-      );
+      return;
     }
     setLoading(true);
     setError(null);

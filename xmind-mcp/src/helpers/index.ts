@@ -140,9 +140,8 @@ export const getDefaultSellerPaymentRequirements =
     network: "cronos-testnet",
     payTo: X402_SELLER_WALLET,
     asset: X402_USDCE_TESTNET,
-    description: "Access paid farm pools",
+    description: "Access paid farm pools on Xmind.",
     mimeType: "application/json",
-    // 0.1 USDC.e (6 decimals)
     maxAmountRequired: "100000",
     maxTimeoutSeconds: 300,
   });
@@ -315,7 +314,6 @@ export const handleX402Payment = async ({
 
     const paymentHeader = await createX402PaymentHeader({
       privateKey,
-      paymentRequirements,
     });
 
     const retryOptions: RequestInit = {
@@ -341,38 +339,54 @@ export const handleX402Payment = async ({
   }
 };
 
+export const fetchPaymentRequirements = async (
+  facilitatorUrl: string = X402_FACILITATOR_URL,
+): Promise<X402PaymentRequirements> => {
+  try {
+    const response = await fetch(`${facilitatorUrl}/requirements`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch payment requirements: ${response.statusText}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      paymentRequirements: X402PaymentRequirements;
+    };
+    return data.paymentRequirements;
+  } catch (error) {
+    console.error("Error fetching payment requirements:", error);
+    // Fallback to default requirements if fetch fails
+    return getDefaultSellerPaymentRequirements();
+  }
+};
+
 export const createX402PaymentHeader = async ({
   privateKey,
-  paymentRequirements,
   rpcUrl = "https://evm-t3.cronos.org/",
+  facilitatorUrl = X402_FACILITATOR_URL,
 }: {
   privateKey: string;
-  paymentRequirements: X402PaymentRequirements;
   rpcUrl?: string;
+  facilitatorUrl?: string;
 }): Promise<string> => {
   try {
-    let {
-      payTo,
-      asset,
-      maxAmountRequired,
-      maxTimeoutSeconds,
-      scheme,
-      network,
-    } = paymentRequirements;
+    // Fetch payment requirements directly from facilitator (source of truth)
+    const paymentRequirements = await fetchPaymentRequirements(facilitatorUrl);
+
+    // Hardcode seller wallet to avoid case sensitivity issues from facilitator
+    const payTo = X402_SELLER_WALLET;
+    const asset = X402_USDCE_TESTNET;
+
+    let { maxAmountRequired, maxTimeoutSeconds, network, scheme } =
+      paymentRequirements;
 
     // Normalize network string: "Cronos Testnet" → "cronos-testnet"
-    network = network
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace("testnet", "testnet");
-
-    if (!ethers.isAddress(payTo)) {
-      throw new Error("Invalid payTo address in payment requirements");
-    }
-
-    if (!ethers.isAddress(asset)) {
-      throw new Error("Invalid asset address in payment requirements");
-    }
+    network = network.toLowerCase().replace(/\s+/g, "-").replace(/_/g, "-");
 
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
@@ -418,10 +432,14 @@ export const createX402PaymentHeader = async ({
       scheme,
       network,
       payload: {
-        ...messageToSign,
+        from: ethers.getAddress(wallet.address), // Checksummed
+        to: ethers.getAddress(payTo), // Checksummed
         value: maxAmountRequired,
+        validAfter: String(validAfter),
+        validBefore: String(validBefore),
+        nonce,
         signature,
-        asset,
+        asset: ethers.getAddress(asset), // Checksummed
       },
     };
 

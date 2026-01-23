@@ -50,6 +50,7 @@ export function AlertDialogModal({
         <Button
           className="w-full mt-8 md:w-1/2 border-green-500 border-dashed font-sans"
           variant="outline"
+          disabled={isDeploying}
         >
           Review
         </Button>

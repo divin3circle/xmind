@@ -5,9 +5,9 @@ import { Agents } from "@/lib/models/Agents";
 import { GoogleGenAI, FunctionCallingConfigMode } from "@google/genai";
 import { listMcpTools, callMcpTool } from "@/client/agent";
 import config from "@/config/env";
-import { cryptr } from "../agent/create/route";
 
 const FALLBACK_GEMINI_API_KEY = config.GEMINI_API_KEY;
+const MESSAGES_PER_AGENT_PER_USER = config.MESSAGES_PER_AGENT_PER_USER;
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +15,25 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { message, agentId, userAddress } = body;
+
+    const chatObject = await AgentChat.findOne({
+      agentId: agentId.toLowerCase().trim(),
+      userAddress: userAddress.toLowerCase().trim(),
+    });
+
+    const chatCount = chatObject ? chatObject.messages.length : 0;
+
+    console.log("Chat count.....", chatCount);
+
+    if (chatCount >= 200) {
+      // TODO: Remove hardcoded limit
+      return NextResponse.json(
+        {
+          error: `You have reached the limit of ${MESSAGES_PER_AGENT_PER_USER} messages per agent.`,
+        },
+        { status: 403 },
+      );
+    }
 
     if (!message || !agentId || !userAddress) {
       return NextResponse.json(
@@ -38,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decryptedKey = cryptr.decrypt(agent.encryptedPrivateKey);
+    const decryptedKey = agent.encryptedPrivateKey;
 
     // TODO: Check agent's USDC balance and bill if using fallback key
     let ai;
@@ -102,7 +121,7 @@ ${JSON.stringify(agentDetails, null, 2)}
 PAYMENT PROTOCOL (X402):
 - Some endpoints (get_paid_farm_pools, get_paid_tickers) require payment: 0.1 USDC.e on Cronos testnet
 - If user needs paid data, ASK THEM UPFRONT for an X402 payment header
-- User can obtain header by calling: sign_x402_payment_header with their private key
+- User can obtain header by calling: sign_x402_payment_header with just their privateKey (requirements are fetched automatically)
 - Once user provides the header, you will REUSE IT AUTOMATICALLY for all paid requests (valid for 5 minutes)
 - NO NEED TO ASK AGAIN - one header pays for multiple API calls
 - Format: when user provides header, include it in subsequent paid tool calls

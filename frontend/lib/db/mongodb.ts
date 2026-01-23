@@ -8,8 +8,7 @@ declare global {
   };
 }
 
-const MONGODB_URI =
-  "mongodb+srv://sylus:mFru3S1PVQQiPZVN@cluster0.fe3957j.mongodb.net/?appName=Cluster0?directConnection=true";
+const MONGODB_URI = config.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");

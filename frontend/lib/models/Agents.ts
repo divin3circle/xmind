@@ -20,7 +20,7 @@ export interface IAgent {
   ratings: number[];
   systemPrompt?: string;
   walletAddress?: string;
-  privateKey?: string; // is encrypted
+  privateKey: string; // is encrypted
   geminiKey?: string; // is encrypted
   contractAddress?: string;
   transactionHash?: string;

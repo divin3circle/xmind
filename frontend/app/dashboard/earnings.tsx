@@ -7,6 +7,7 @@ import { IconLoader2, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useActiveAccount } from "thirdweb/react";
 
 function Earnings() {
   const router = useRouter();
@@ -17,6 +18,7 @@ function Earnings() {
     fetchAgentBalance,
     loading: earningsLoading,
   } = useEarningsData();
+  const activeAccount = useActiveAccount();
 
   useEffect(() => {
     const loadBalances = async () => {
@@ -25,7 +27,7 @@ function Earnings() {
     };
 
     loadBalances();
-  }, []);
+  }, [activeAccount?.address]);
 
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">

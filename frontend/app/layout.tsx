@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "xMind - Pay-Per-Query AI Agent for Cronos zkEVM",
-  description: "Pay-Per-Query AI Agent for Cronos zkEVM",
+  title: "xMind - Pay-Per-Query AI Agent for Cronos",
+  description: "Pay-Per-Query AI Agent for Cronos",
 };
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
     <ThirdWeb>
       <html lang="en" className={figtree.variable}>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
           <Toaster position="top-right" />

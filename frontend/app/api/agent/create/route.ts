@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongodb";
 import { Agents as Agent } from "@/lib/models/Agents";
-import Cryptr from "cryptr";
 import config from "@/config/env";
 
-export const cryptr = new Cryptr(config.ENCRYPTION_KEY);
+const ALLOWED_AGENTS_PER_USER = config.ALLOWED_AGENTS_PER_USER;
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,25 +24,41 @@ export async function POST(request: NextRequest) {
       transactionHash,
     } = body;
 
-    if (!name || !description || !walletAddress || !creatorAddress || !privateKey || !contractAddress) {
+    const existingAgentsCount = await Agent.countDocuments({
+      creatorAddress: creatorAddress.toLowerCase(),
+    });
+
+    if (existingAgentsCount >= ALLOWED_AGENTS_PER_USER) {
+      return NextResponse.json(
+        {
+          error: `You have reached the limit of ${ALLOWED_AGENTS_PER_USER} agents per user.`,
+        },
+        { status: 403 },
+      );
+    }
+
+    if (
+      !name ||
+      !description ||
+      !walletAddress ||
+      !creatorAddress ||
+      !privateKey ||
+      !contractAddress
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const encryptedPrivateKey = cryptr.encrypt(privateKey);
-    const encryptedGeminiKey = geminiKey
-      ? cryptr.encrypt(geminiKey)
-      : undefined;
     const newAgent = await Agent.create({
       name,
       description,
       image,
       systemPrompt,
       walletAddress,
-      encryptedPrivateKey,
-      encryptedGeminiKey,
+      privateKey,
+      geminiKey,
       contractAddress,
       creatorAddress,
       tasks: tasks || [],

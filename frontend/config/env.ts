@@ -32,6 +32,12 @@ const config = {
   NEXT_PUBLIC_AGENT_FACTORY_OWNER:
     process.env.NEXT_PUBLIC_AGENT_FACTORY_OWNER || "",
   CONTEXT: process.env.CONTEXT || "",
+  ALLOWED_AGENTS_PER_USER: process.env.ALLOWED_AGENTS_PER_USER
+    ? parseInt(process.env.ALLOWED_AGENTS_PER_USER)
+    : 1,
+  MESSAGES_PER_AGENT_PER_USER: process.env.MESSAGES_PER_AGENT_PER_USER
+    ? parseInt(process.env.MESSAGES_PER_AGENT_PER_USER)
+    : 20,
 };
 
 function getAppUrl() {
