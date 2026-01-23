@@ -18,13 +18,13 @@ function Hero() {
           Cronos EVM
         </Button>
         <h1 className="text-2xl md:text-5xl font-bold font-sans mt-8 mb-4 text-left">
-          x402-powered MCP AI agents for Cronos EVM
+          Deploy, paygate, and run Cronos AI agents
         </h1>
         <p className="text-xs md:text-sm font-sans leading-relaxed mb-6 text-left md:max-w-md mt-4">
-          Experience the future of decentralized AI with xMind, the premier MCP
-          AI Agent platform on Cronos EVM. Seamlessly integrate intelligent
-          agents into your dApps and smart contracts to unlock new possibilities
-          in automation, decision-making, and user engagement.
+          Launch MCP agents on Cronos EVM with x402 payments baked in. Browse
+          templates, deploy on-chain wallets and contracts, meter paid calls,
+          and monitor earnings from one dashboard. No infra wrangling—just ship
+          agents that can charge and act.
         </p>
         <div className="flex flex-col md:flex-row justify-center md:justify-start gap-4 mt-14">
           <Button

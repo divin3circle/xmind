@@ -3,24 +3,24 @@ import FeatureCard from "./feature-card";
 
 const features = [
   {
-    title: "Create an Agent",
-    tagline: "Deploy a Helpful MCP AI Agent",
+    title: "Launch Paid Agents",
+    tagline: "Deploy on-chain in minutes",
     description:
-      "With xMind, you can easily create and deploy your own MCP AI Agent on the Cronos and use it to automate repeated tasks, process real-world data, or enhance user engagement in your dApps.",
+      "Spin up Cronos-native MCP agents with wallets, contracts, and prompts baked in. Own the contract, track earnings, and update capabilities without touching infra.",
     imageUrl: "/feature2.avif",
   },
   {
-    title: "Yield & Pool Information",
-    tagline: "Find the Best Opportunities Fast",
+    title: "x402 Paywalls & Micropayments",
+    tagline: "Meter every interaction",
     description:
-      "xMind MCP AI Agent scans live Cronos EVM pools and farms on VVS and H2 protocols and provides yield optimization suggestions in plain English, so you can maximize returns without endless research.",
+      "Agents natively use HTTP 402 + EIP-3009 to charge per request. Issue payment headers, verify, settle, and record earnings automatically in USDC.e.",
     imageUrl: "/feature2.webp",
   },
   {
-    title: "Cronos Chain Information",
-    tagline: "Get Instant Answers",
+    title: "Web3 Superpowers",
+    tagline: "DeFi, wallets, bridging, chat",
     description:
-      "xMind uses Crypto.com Developer SDK and AI SDK to provide instant, accurate answers to your questions about the Cronos EVM blockchain, wallets, transactions, contracts, and dApps in plain English.",
+      "MCP server ships 30+ tools: VVS/H2 pools, balances, transfers, Cronos ID, bridge routes, ABI lookups, simulations, and secure task logging for each agent.",
     imageUrl: "/feature3.jpg",
   },
 ];
