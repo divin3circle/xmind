@@ -430,6 +430,7 @@ function StepFive({
       toast.error("Please connect your wallet first");
       return;
     }
+    console.log("Deploying agent with values:", values);
     await deployAgent({
       name: values.name,
       description: values.description,

@@ -5,6 +5,7 @@ import { Agents } from "@/lib/models/Agents";
 import { GoogleGenAI, FunctionCallingConfigMode } from "@google/genai";
 import { listMcpTools, callMcpTool } from "@/client/agent";
 import config from "@/config/env";
+import { cryptr } from "../agent/create/route";
 
 const FALLBACK_GEMINI_API_KEY = config.GEMINI_API_KEY;
 
@@ -37,6 +38,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const decryptedKey = cryptr.decrypt(agent.encryptedPrivateKey);
+
     // TODO: Check agent's USDC balance and bill if using fallback key
     let ai;
     try {
@@ -65,14 +68,14 @@ export async function POST(request: NextRequest) {
 
     const conversationHistory = [];
 
-    // Extract X402 payment header from user message for session-wide reuse
-    // Header looks like: "eyJ..." (Base64) and is valid for 5 minutes across all paid requests
     let x402Header: string | null = null;
-    const headerMatch = message.match(/x402[:\s]+([A-Za-z0-9+/=]+)/i);
+
+    const headerMatch = message.match(/x402[:\s]+([\s\S]*?)(?:\n\n|$)/i);
     if (headerMatch && headerMatch[1]) {
-      x402Header = headerMatch[1];
+      const extractedHeader = headerMatch[1].replace(/\s/g, "");
+      x402Header = extractedHeader;
       console.log(
-        "X402 header extracted from user message, will reuse for all paid API calls",
+        `X402 header extracted from user message (${extractedHeader.length} chars), will reuse for all paid API calls`,
       );
     }
 
@@ -88,6 +91,7 @@ export async function POST(request: NextRequest) {
         earnings: agent.earnings,
         creatorAddress: agent.creatorAddress,
         creationTxHash: agent.transactionHash,
+        privateKey: decryptedKey,
       };
 
       const systemMessage = `System instructions: ${agent.systemPrompt}
@@ -104,7 +108,13 @@ PAYMENT PROTOCOL (X402):
 - Format: when user provides header, include it in subsequent paid tool calls
 - This is WAY better UX than asking for payment per request!
 
-Important: You have access to your own wallet address (${agent.walletAddress}), smart contract (${agent.contractAddress}), creator address (${agent.creatorAddress}), creation transaction hash (${agent.creationTxHash}) among other details from your Agent Self-Info above. ${config.CONTEXT}`;
+IMPORTANT - USER EXPERIENCE:
+- NEVER show raw tool invocations, tool_code blocks, or technical function calls to the user
+- Present all results in natural, user-friendly language
+- Summarize outcomes clearly (e.g., "Sent 1 TCRO to 0x28eEE..." instead of showing the raw tool call)
+- Hide implementation details—the user should only see the result, not how you did it
+
+Important: You have access to your own wallet address (${agent.walletAddress}), smart contract (${agent.contractAddress}), creator address (${agent.creatorAddress}), creation transaction hash (${agent.creationTxHash}) among other details from your Agent Self-Info above. `;
 
       conversationHistory.push({
         role: "user",

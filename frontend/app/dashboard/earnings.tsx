@@ -1,13 +1,32 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { Button } from "@/components/ui/button";
 import { useMyAgents } from "@/hooks/useMyAgents";
+import { useEarningsData } from "@/hooks/useEarningsData";
 import { IconLoader2, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 function Earnings() {
   const router = useRouter();
   const { agents, loading } = useMyAgents();
+  const {
+    earningsData,
+    fetchUsdcBalance,
+    fetchAgentBalance,
+    loading: earningsLoading,
+  } = useEarningsData();
+
+  useEffect(() => {
+    const loadBalances = async () => {
+      await fetchUsdcBalance();
+      await fetchAgentBalance();
+    };
+
+    loadBalances();
+  }, []);
+
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">
       <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
@@ -32,14 +51,24 @@ function Earnings() {
         </div>
         <div className="mt-4">
           <h1 className="font-sans text-foreground/90 font-bold text-4xl text-center">
-            $1,245.67
+            {earningsLoading ? (
+              <span className="w-full flex items-center justify-center">
+                <IconLoader2 size={16} className="animate-spin" />
+              </span>
+            ) : (
+              `$${parseFloat(earningsData?.usdcBalance || "0").toFixed(2)}`
+            )}
           </h1>
           <div className="flex w-full mt-4 items-center justify-between">
             <h1 className="font-sans text-xs font-semibold text-muted-foreground">
               Tokens
             </h1>
             <p className="font-sans text-xs font-semibold text-muted-foreground">
-              5,432.12 USDC.e
+              {earningsLoading ? (
+                <IconLoader2 size={12} className="animate-spin" />
+              ) : (
+                `${parseFloat(earningsData?.usdcBalance || "0").toFixed(2)} USDC.e`
+              )}
             </p>
           </div>
           <div className="flex w-full mt-2 items-center justify-between">
@@ -75,7 +104,11 @@ function Earnings() {
               Agents Balance
             </h1>
             <p className="font-sans text-xs font-semibold text-muted-foreground">
-              4,686.97 USDC.e
+              {earningsLoading ? (
+                <IconLoader2 size={12} className="animate-spin" />
+              ) : (
+                `${parseFloat(earningsData?.totalAgentBalance || "0").toFixed(2)} USDC.e`
+              )}
             </p>
           </div>
           <div className="flex w-full mt-2 items-center justify-between">

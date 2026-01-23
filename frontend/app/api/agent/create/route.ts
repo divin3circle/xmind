@@ -4,7 +4,7 @@ import { Agents as Agent } from "@/lib/models/Agents";
 import Cryptr from "cryptr";
 import config from "@/config/env";
 
-const cryptr = new Cryptr(config.ENCRYPTION_KEY);
+export const cryptr = new Cryptr(config.ENCRYPTION_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       transactionHash,
     } = body;
 
-    if (!name || !description || !walletAddress || !creatorAddress) {
+    if (!name || !description || !walletAddress || !creatorAddress || !privateKey || !contractAddress) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
