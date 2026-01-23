@@ -278,9 +278,11 @@ MIT License - feel free to use in your projects!
 ### Common Issues
 
 1. **"Insufficient deployment fee"**
+
    - Ensure you're sending at least 2 CRO with deployment
 
 2. **"Agent does not exist"**
+
    - Verify the agent address is correct
    - Check the agent was actually deployed
 
@@ -307,4 +309,4 @@ After deployment:
 
 ---
 
-Built with ❤️ for the Bazaar AI Agent Platform
+Built with ❤️ for the xMind AI Agent Platform

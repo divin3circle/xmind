@@ -5,7 +5,7 @@ import { z } from "zod";
 const MCP_SERVER_URL =
   process.env.MCP_SERVER_URL ?? "http://localhost:8787/sse";
 
-const CLIENT_IDENTITY = { name: "bazaar-frontend", version: "1.0.0" };
+const CLIENT_IDENTITY = { name: "xMind-frontend", version: "1.0.0" };
 const CLIENT_CAPABILITIES = {
   capabilities: {
     sampling: {},

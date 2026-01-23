@@ -1,8 +1,8 @@
-# 🚀 Bazaar - AI Agent Marketplace on Cronos EVM
+# 🚀 xMind - AI Agent Marketplace on Cronos EVM
 
 > **Built for Cronos x402 Paytech Hackathon 2026**
 
-Bazaar is a decentralized marketplace for creating, deploying, and monetizing AI agents with programmable x402-powered payment capabilities on Cronos EVM. Users can create custom AI agents with specialized skills, deploy them on-chain, and earn from agent interactions through automated micropayments.
+xMind is a decentralized marketplace for creating, deploying, and monetizing AI agents with programmable x402-powered payment capabilities on Cronos EVM. Users can create custom AI agents with specialized skills, deploy them on-chain, and earn from agent interactions through automated micropayments.
 
 ## 📖 Table of Contents
 
@@ -21,7 +21,7 @@ Bazaar is a decentralized marketplace for creating, deploying, and monetizing AI
 
 ## 🎯 Overview
 
-Bazaar revolutionizes how AI agents are created, deployed, and monetized by combining:
+xMind revolutionizes how AI agents are created, deployed, and monetized by combining:
 
 - **AI Agent Intelligence**: Custom AI agents powered by LLMs with specialized system prompts
 - **x402 Programmable Payments**: Seamless micropayments triggered by agent interactions
@@ -37,7 +37,7 @@ Bazaar revolutionizes how AI agents are created, deployed, and monetized by comb
 
 ### Our Solution
 
-Bazaar provides a complete platform where:
+xMind provides a complete platform where:
 
 - **Creators** can deploy AI agents as NFT-like smart contracts with custom capabilities
 - **Users** interact with agents through natural language, paying per interaction via x402
@@ -324,8 +324,8 @@ Pre-built agent templates for common use cases:
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/divin3circle/bazaar.git
-cd bazaar
+git clone https://github.com/divin3circle/xMind.git
+cd xMind
 ```
 
 ### 2. Install Frontend Dependencies
@@ -585,7 +585,7 @@ Built with ❤️ for Cronos x402 Paytech Hackathon 2026
 ## 📞 Contact & Links
 
 - **Website**: [https://xmind-dusky.vercel.app/]
-- **GitHub**: https://github.com/divin3circle/bazaar
+- **GitHub**: https://github.com/divin3circle/xMind
 - **Twitter**: [@the_sylus]
 - **Demo Video**: [YouTube link]
 - **Documentation**: [Notion/GitBook link]

@@ -20,8 +20,8 @@ interface NonceResponse {
 
 export class AuthService {
   private backendUrl = "/api/auth";
-  private tokenKey = "bazaar_auth_token";
-  private walletAddressKey = "bazaar_wallet_address";
+  private tokenKey = "xMind_auth_token";
+  private walletAddressKey = "xMind_wallet_address";
 
   constructor() {}
 
@@ -77,7 +77,7 @@ export class AuthService {
 
       // Store wallet address and user info (token can be optional or stored from response)
       this.setWalletAddress(data.walletAddress);
-      localStorage.setItem("bazaar_user", JSON.stringify(data.user));
+      localStorage.setItem("xMind_user", JSON.stringify(data.user));
 
       return data;
     } catch (error) {
@@ -133,7 +133,7 @@ export class AuthService {
 
   async authenticatedFetch(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<Response> {
     const headers = {
       "Content-Type": "application/json",
