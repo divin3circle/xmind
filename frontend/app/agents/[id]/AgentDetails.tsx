@@ -97,7 +97,7 @@ function DetailRow({
   if (!value) return null;
   return (
     <div className="flex items-start gap-2">
-      <span className="text-xs uppercase tracking-wide text-muted-foreground min-w-[120px]">
+      <span className="text-xs uppercase tracking-wide text-muted-foreground min-w-30">
         {label}
       </span>
       <span className={`text-sm ${isMono ? "font-mono" : ""}`}>{value}</span>
