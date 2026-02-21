@@ -9,14 +9,15 @@ export interface EarningsData {
   usdcBalance: string;
 }
 
-const provider = new ethers.JsonRpcProvider("https://evm-t3.cronos.org/");
+const provider = new ethers.JsonRpcProvider("https://api.avax-test.network/ext/bc/C/rpc");
 
 const erc20Abi = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
 ];
 
-const contract = new ethers.Contract(
+// Reference contract for USDC (underlying)
+const usdcContract = new ethers.Contract(
   config.NEXT_PUBLIC_PAYMENT_TOKEN_ADDRESS,
   erc20Abi,
   provider,
@@ -38,8 +39,8 @@ export const useEarningsData = () => {
 
     try {
       const [balanceInWei, decimals] = await Promise.all([
-        contract.balanceOf(activeAccount.address),
-        contract.decimals(),
+        usdcContract.balanceOf(activeAccount.address),
+        usdcContract.decimals(),
       ]);
 
       const balanceFormatted = ethers.formatUnits(balanceInWei, decimals);
@@ -68,9 +69,9 @@ export const useEarningsData = () => {
         return "0";
       }
 
-      const decimals = await contract.decimals();
+      const decimals = await usdcContract.decimals();
       const balancesInWei = await Promise.all(
-        agents.map((agent) => contract.balanceOf(agent.walletAddress)),
+        agents.map((agent) => usdcContract.balanceOf(agent.vaultAddress)),
       );
 
       const totalBalance = balancesInWei.reduce((acc, balanceInWei) => {

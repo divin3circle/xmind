@@ -1,21 +1,13 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ITemplate } from "./models/Template";
-import type { IAgent } from "./models/Agents";
+import { IVaultAgent } from "./models/VaultAgent";
 
-export type Agent = IAgent;
+export type Agent = IVaultAgent;
 
 export const mockAgents: Agent[] = [];
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export function getTemplateById(
-  id: string,
-  templates: ITemplate[],
-): ITemplate | undefined {
-  return templates.find((template) => template._id === id);
 }
 
 const samples: Record<string, string[]> = {

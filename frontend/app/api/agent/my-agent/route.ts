@@ -1,5 +1,5 @@
 import dbConnect from "@/lib/db/mongodb";
-import { Agents } from "@/lib/models/Agents";
+import { VaultAgent } from "@/lib/models/VaultAgent";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const walletAddress = searchParams.get("walletAddress");
-  console.log("Fetching my agents for request:", walletAddress);
+  console.log("Fetching my vaults for request:", walletAddress);
 
   if (!walletAddress) {
     return NextResponse.json(
@@ -16,12 +16,12 @@ export async function GET(request: Request) {
     );
   }
 
-  const myAgents = await Agents.find({
+  const myVaults = await VaultAgent.find({
     creatorAddress: walletAddress.toLowerCase(),
   });
 
   return NextResponse.json({
     success: true,
-    agents: myAgents,
+    agents: myVaults,
   });
 }

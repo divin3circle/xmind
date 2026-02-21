@@ -12,13 +12,15 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@crypto.com/developer-platform-client": "^1.1.2",
-		"@lifi/sdk": "^3.15.3",
+		"@avalanche-sdk/client": "^0.1.1",
 		"@modelcontextprotocol/sdk": "^1.25.2",
 		"agents": "^0.3.1",
 		"ethers": "^6.16.0",
 		"thirdweb": "^5.118.0",
 		"zod": "^4.2.1"
+	},
+	"overrides": {
+		"@modelcontextprotocol/sdk": "$@modelcontextprotocol/sdk"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",
