@@ -147,11 +147,10 @@ function TemplateCard({ template }: { template: ITemplate }) {
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {template.templateName} Template
+                {template.templateName}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
-                {template.creatorAddress.slice(0, 6)}...
-                {template.creatorAddress.slice(-4)}
+                {template.tagline}
               </p>
             </div>
           </div>
@@ -168,7 +167,7 @@ function TemplateCard({ template }: { template: ITemplate }) {
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-sans text-muted-foreground">Earned</p>
+            <p className="text-xs font-sans text-muted-foreground">Holdings</p>
             <p className="font-sans text-xs font-semibold">
               {formatBigNumberToReducedString(BigInt(template.totalEarned))}{" "}
               USDC.e

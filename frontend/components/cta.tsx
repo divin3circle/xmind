@@ -19,7 +19,8 @@ function CTA() {
             Ready to Get Started?
           </h1>
           <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
-            Connect your wallet, choose an agent, and make your Web3 life easier
+            Connect your wallet, choose an AI strategy, and start growing your 
+            portfolio with trustless, autonomous machine intelligence.
           </p>
           <Button
             onClick={() => {
