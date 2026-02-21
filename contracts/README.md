@@ -1,312 +1,80 @@
-# XMind AI Agent Smart Contracts
+# XMind Capital: AI-Driven DeFi Vaults (Avalanche)
 
-Professional smart contracts for deploying and managing AI agents on the Cronos blockchain.
+XMind Capital is a professional smart contract infrastructure for deploying AI-managed investment vaults on the Avalanche blockchain. It leverages the ERC-4626 standard and on-chain risk guardrails to enable AI agents to manage user capital securely across DEXs, bridges, and lending protocols.
 
-## 📋 Overview
+## 🏗️ Architecture Overview
 
-This project contains two main smart contracts:
+The system is designed to bridge the gap between off-chain AI strategy and on-chain capital security.
 
-- **Agent.sol**: Individual AI agent contract with metadata storage and task management
-- **AgentFactory.sol**: Factory contract for deploying and tracking AI agents
+```mermaid
+graph TD
+    User((User)) -->|Deposit USDC| Vault[AgentVault ERC-4626]
+    Vault -->|Mint Shares| User
+    
+    AI[AI Agent Off-Chain] -->|Sign Trade| CRE[CREIntegration]
+    CRE -->|Verify Signature| Vault
+    
+    Vault -->|Validate Risk| Risk[RiskValidator Lib]
+    Risk -->|Check 60% Cap| Vault
+    
+    Vault -->|Execute SWAP| TJ[Trader Joe]
+    Vault -->|Execute BRIDGE| SG[Stargate]
+    Vault -->|Execute LEND| LP[Lending Pools]
+    
+    Vault -->|Distribute Fees| Treasury[PlatformTreasury]
+```
 
-## 🏗️ Architecture
+## 📋 Core Components
 
-### Agent Contract
+### 1. `AgentVault.sol` (ERC-4626)
+The heart of the system. Each vault represents a specific AI strategy.
+- **NAV Tracking**: Calculates Net Asset Value (NAV) by summing idle cash and active investments.
+- **Action Suite**: Executes `SWAP` (Trader Joe), `BRIDGE` (Stargate), and `POOL` (Lending) actions.
+- **Fee Management**: Automatically distributes performance fees to the platform treasury.
 
-Each agent is a separate smart contract that stores:
+### 2. `VaultFactory.sol`
+Enables the rapid deployment of new AI strategy vaults.
+- Maintains a registry of all deployed vaults.
+- Standardizes protocol router addresses (Trader Joe, Stargate) across all agents.
 
-- Agent metadata (name, description, image, system prompt)
-- Wallet addresses (agent wallet, creator address)
-- Task statistics (completed tasks, ran tasks)
-- Payment tracking and earnings management
-- Active/inactive status
+### 3. `RiskValidator.sol` (Library)
+A stateless guardrail that protects user capital from aggressive AI behavior.
+- **Risk Profiles**: Enforces Conservative, Balanced, or Aggressive limits.
+- **40% Liquidity Buffer**: Strictly prevents the AI from investing more than 60% of the vault's assets, ensuring liquidity for immediate withdrawals.
 
-### AgentFactory Contract
-
-The factory manages agent deployment:
-
-- Deploys new Agent contracts with a deployment fee
-- Tracks all deployed agents
-- Maps creators to their agents
-- Handles fee collection and withdrawal
+### 4. `CREIntegration.sol`
+The secure gateway for AI instructions.
+- Uses EIP-712-style signature verification to ensure only the authorized AI signer can trigger trades.
+- Prevents replay attacks using a nonce-based system.
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- Node.js >= 16
-- npm or yarn
-
 ### Installation
-
 ```bash
 cd contracts
 npm install
 ```
 
-### Configuration
-
-1. Create a `.env` file (already created with your private key):
-
+### Compilation
 ```bash
-PRIVATE_KEY=your_private_key_here
-CRONOSCAN_API_KEY=optional_for_verification
+npx hardhat compile
 ```
 
-2. Network configuration is already set up for:
-   - Cronos Testnet (default)
-   - Cronos Mainnet
-
-## 🧪 Testing
-
-Run the comprehensive test suite:
-
+### Deployment (Avalanche Fuji)
+1. Configure your `.env` with `PRIVATE_KEY` and `SNOWTRACE_API_KEY`.
+2. Run the deployment script:
 ```bash
-npm test
+npx hardhat run scripts/deploy_avax.js --network avalancheFuji
 ```
 
-Run with coverage:
+## 🧪 Safety Features
 
-```bash
-npm run test:coverage
-```
-
-## 📦 Compilation
-
-Compile the contracts:
-
-```bash
-npm run compile
-```
-
-## 🚢 Deployment
-
-### Deploy to Cronos Testnet
-
-```bash
-npm run deploy:testnet
-```
-
-### Deploy to Cronos Mainnet
-
-```bash
-npm run deploy:mainnet
-```
-
-### After Deployment
-
-The deployment script will output:
-
-- Factory contract address
-- Deployment fee
-- Verification command
-
-Save the factory address for frontend integration!
-
-## 🔍 Contract Verification
-
-After deployment, verify your contracts on Cronoscan:
-
-```bash
-npx hardhat verify --network cronosTestnet <FACTORY_ADDRESS> "2000000000000000000"
-```
-
-## 💻 Usage Examples
-
-### Deploy an Agent
-
-```javascript
-const factory = await ethers.getContractAt("AgentFactory", FACTORY_ADDRESS);
-
-const tx = await factory.deployAgent(
-  "Trading Assistant",
-  "AI-powered trading agent",
-  "ipfs://QmImageHash",
-  "You are a helpful trading assistant",
-  agentWalletAddress,
-  { value: ethers.parseEther("2.0") }, // 2 CRO deployment fee
-);
-
-await tx.wait();
-```
-
-### Interact with an Agent
-
-```javascript
-const agent = await ethers.getContractAt("Agent", agentAddress);
-
-// Get agent info
-const info = await agent.getAgentInfo();
-
-// Record task completion
-await agent.recordTaskCompleted(taskId);
-
-// Update agent details
-await agent.updateAgentInfo("New Name", "New Description", "new-image.png");
-
-// Withdraw earnings
-await agent.withdrawEarnings(ethers.parseEther("1.0"));
-```
-
-### Query Agents
-
-```javascript
-// Get all agents
-const allAgents = await factory.getAllAgents();
-
-// Get agents by creator
-const myAgents = await factory.getAgentsByCreator(creatorAddress);
-
-// Get paginated agents
-const agents = await factory.getAgentsPaginated(0, 10);
-```
+- **Net Asset Value (NAV)**: Shares are always priced based on the total portfolio value (Cash + Active Trades).
+- **Hard Liquidity Cap**: 40% of every deposit is kept as idle USDC by default to satisfy user withdrawals.
+- **Signature Auth**: No one, not even the owner, can execute a trade without a valid AI-signed instruction.
 
 ## 📁 Project Structure
+- `contracts/`: Core Solidity logic.
+- `scripts/`: Deployment and interaction scripts.
+- `test/`: Comprehensive unit tests for withdrawals, risk, and integration.
 
-```
-contracts/
-├── contracts/
-│   ├── Agent.sol              # Individual agent contract
-│   └── AgentFactory.sol       # Factory contract
-├── test/
-│   ├── Agent.test.js          # Agent contract tests
-│   └── AgentFactory.test.js   # Factory contract tests
-├── scripts/
-│   ├── deploy.js              # Deployment script
-│   └── interact.js            # Interaction examples
-├── hardhat.config.js          # Hardhat configuration
-├── package.json               # Dependencies
-└── .env                       # Environment variables
-```
-
-## 🔒 Security Features
-
-- **OpenZeppelin Contracts**: Uses audited, battle-tested libraries
-- **Ownable**: Only creators can modify their agents
-- **ReentrancyGuard**: Protects against reentrancy attacks
-- **Input Validation**: Comprehensive validation on all inputs
-- **Access Control**: Proper permission checks throughout
-
-## 💡 Key Features
-
-### Agent Contract
-
-- ✅ Store agent metadata and system prompts
-- ✅ Track task execution and completion
-- ✅ Receive and manage payments
-- ✅ Toggle active/inactive status
-- ✅ Withdraw earnings securely
-- ✅ Full ownership control
-
-### AgentFactory Contract
-
-- ✅ Deploy new agents with deployment fee
-- ✅ Track all deployed agents
-- ✅ Map creators to their agents
-- ✅ Paginated agent queries
-- ✅ Fee management and withdrawal
-- ✅ Configurable deployment fee
-
-## 🌐 Network Information
-
-### Cronos Testnet
-
-- RPC: https://evm-t3.cronos.org
-- Chain ID: 338
-- Explorer: https://testnet.cronoscan.com
-- Faucet: https://cronos.org/faucet
-
-### Cronos Mainnet
-
-- RPC: https://evm.cronos.org
-- Chain ID: 25
-- Explorer: https://cronoscan.com
-
-## 📊 Gas Optimization
-
-Contracts are optimized for gas efficiency:
-
-- Efficient storage patterns
-- Minimal external calls
-- Batch operations where possible
-- Compiler optimizations enabled
-
-## 🤝 Integration Guide
-
-### Frontend Integration
-
-1. Install ethers.js:
-
-```bash
-npm install ethers
-```
-
-2. Connect to factory:
-
-```javascript
-import { ethers } from "ethers";
-import AgentFactoryABI from "./AgentFactory.json";
-
-const provider = new ethers.BrowserProvider(window.ethereum);
-const factory = new ethers.Contract(FACTORY_ADDRESS, AgentFactoryABI, provider);
-```
-
-3. Deploy agent from frontend:
-
-```javascript
-const signer = await provider.getSigner();
-const factoryWithSigner = factory.connect(signer);
-
-const tx = await factoryWithSigner.deployAgent(
-  name,
-  description,
-  image,
-  systemPrompt,
-  walletAddress,
-  { value: ethers.parseEther("2.0") },
-);
-
-const receipt = await tx.wait();
-```
-
-## 📝 License
-
-MIT License - feel free to use in your projects!
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **"Insufficient deployment fee"**
-
-   - Ensure you're sending at least 2 CRO with deployment
-
-2. **"Agent does not exist"**
-
-   - Verify the agent address is correct
-   - Check the agent was actually deployed
-
-3. **"Insufficient balance"**
-   - Ensure your wallet has enough TCRO for gas + deployment fee
-
-## 📞 Support
-
-For issues or questions:
-
-1. Check the test files for usage examples
-2. Review the contract comments and documentation
-3. Ensure your environment is properly configured
-
-## 🎯 Next Steps
-
-After deployment:
-
-1. Save the factory address
-2. Update your frontend with the address
-3. Test agent deployment on testnet
-4. Verify contracts on Cronoscan
-5. Deploy to mainnet when ready
-
----
-
-Built with ❤️ for the xMind AI Agent Platform

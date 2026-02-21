@@ -16,39 +16,37 @@ module.exports = {
     hardhat: {
       chainId: 31337,
     },
-    cronosTestnet: {
-      url: "https://evm-t3.cronos.org",
-      chainId: 338,
+    avalancheFuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 5000000000000, // 5000 gwei
     },
-    cronosMainnet: {
-      url: "https://evm.cronos.org",
-      chainId: 25,
+    avalancheMainnet: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 5000000000000, // 5000 gwei
     },
   },
   etherscan: {
     apiKey: {
-      cronosTestnet: process.env.CRONOSCAN_API_KEY || "placeholder",
-      cronosMainnet: process.env.CRONOSCAN_API_KEY || "placeholder",
+      avalancheFuji: process.env.SNOWTRACE_API_KEY || "placeholder",
+      avalancheMainnet: process.env.SNOWTRACE_API_KEY || "placeholder",
     },
     customChains: [
       {
-        network: "cronosTestnet",
-        chainId: 338,
+        network: "avalancheFuji",
+        chainId: 43113,
         urls: {
-          apiURL: "https://api-testnet.cronoscan.com/api",
-          browserURL: "https://testnet.cronoscan.com",
+          apiURL: "https://api-testnet.snowtrace.io/api",
+          browserURL: "https://testnet.snowtrace.io",
         },
       },
       {
-        network: "cronosMainnet",
-        chainId: 25,
+        network: "avalancheMainnet",
+        chainId: 43114,
         urls: {
-          apiURL: "https://api.cronoscan.com/api",
-          browserURL: "https://cronoscan.com",
+          apiURL: "https://api.snowtrace.io/api",
+          browserURL: "https://snowtrace.io",
         },
       },
     ],
