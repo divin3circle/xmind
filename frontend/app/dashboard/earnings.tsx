@@ -31,11 +31,11 @@ function Earnings() {
 
   return (
     <div className="mt-8 px-2 flex flex-col md:flex-row gap-4 justify-center">
-      <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
-        <IconPlus className="absolute -top-3 -right-3" color="gray" />
-        <IconPlus className="absolute -top-3 -left-3" color="gray" />
-        <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
-        <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
+      <div className="w-full md:w-1/4 group hover:border-green-500 transition-all duration-500 ease-in-out border hover:overflow-visible overflow-hidden relative border-dashed p-4">
+        <IconPlus className="absolute -top-3 -right-3 group-hover:text-green-500 transition-all duration-500 ease-in-out" color="gray" />
+        <IconPlus className="absolute -top-3 -left-3 group-hover:text-green-500 transition-all duration-500 ease-in-out" color="gray" />
+        <IconPlus className="absolute -bottom-3 -right-3 group-hover:text-green-500 transition-all duration-500 ease-in-out" color="gray" />
+        <IconPlus className="absolute -bottom-3 -left-3 group-hover:text-green-500 transition-all duration-500 ease-in-out" color="gray" />
         <div className="flex w-full items-center justify-between">
           <h1 className="font-sans font-semibold text-sm">Balance</h1>
           <div className="flex items-center gap-1">
@@ -83,7 +83,7 @@ function Earnings() {
           </div>
         </div>
       </div>
-      <div className="w-full md:w-1/4 border overflow-hidden relative border-dashed p-4">
+      <div className="w-full md:w-1/4 group hover:border-green-500 transition-all duration-500 ease-in-out border overflow-hidden relative border-dashed p-4 hover:overflow-visible">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />
@@ -123,7 +123,7 @@ function Earnings() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between w-full md:w-1/2 border overflow-hidden relative border-dashed p-4">
+      <div className="flex items-center group hover:border-green-500 transition-all duration-500 ease-in-out justify-between w-full md:w-1/2 border overflow-hidden relative border-dashed p-4 hover:overflow-visible">
         <IconPlus className="absolute -top-3 -right-3" color="gray" />
         <IconPlus className="absolute -top-3 -left-3" color="gray" />
         <IconPlus className="absolute -bottom-3 -right-3" color="gray" />

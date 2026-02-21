@@ -8,13 +8,25 @@ import { toast } from "sonner";
 import authService from "@/services/authService";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useSwitchActiveWalletChain } from "thirdweb/react";
+import { avalancheFuji } from "thirdweb/chains";
 
 function Connect() {
   const { connect, isConnecting, error } = useConnect();
+  const switchChain = useSwitchActiveWalletChain();
   const activeWallet = useActiveWallet();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const router = useRouter();
   const path = usePathname();
+
+  useEffect(() => {
+    if (activeWallet && activeWallet.getChain()?.id !== avalancheFuji.id) {
+      switchChain(avalancheFuji).catch((err) => {
+        console.error("Failed to switch chain:", err);
+        toast.error("Please switch to Avalanche Fuji network");
+      });
+    }
+  }, [activeWallet, switchChain]);
 
   useEffect(() => {
     if (
