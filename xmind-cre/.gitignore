@@ -1,0 +1,4 @@
+*.env
+node_modules
+xmind-workflow/node_modules
+xmind-workflow/bun.lock
