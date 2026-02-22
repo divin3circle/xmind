@@ -34,6 +34,13 @@ export async function simulateTrade({
   };
 }
 
+const FUJI_TOKENS: Record<string, string> = {
+  "AVAX": "0xd00ae08403B9bbb9124bB305C09058E32C39A48c", // WAVAX on Fuji
+  "USDC": "0x5425890298aed601595a70ab815c96711a31Bc65",
+  "LINK": "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
+  "WSTETH": "0x3f9320845083AC5Fd0dF1Aa330fb3506157fe918" // Placeholder ETH
+};
+
 /**
  * THE CORE INSTRUCTION BUILDER
  * Translates strategist's intent (Target Allocation) into concrete signed codes.
@@ -50,10 +57,7 @@ export async function compileVaultInstruction({
   const state = await getVaultState(vaultAddress);
   
   // Logic: Compare current vs target and determine the delta trade
-  // For simplicity in this hackathon version, we assume targetAllocation specifies a new investment
-  // in one asset from the idle pool.
-  
-  const assetSymbol = Object.keys(targetAllocation)[0];
+  const assetSymbol = Object.keys(targetAllocation)[0]?.toUpperCase() || "AVAX";
   const targetWeight = targetAllocation[assetSymbol];
   
   const currentInvestedWeight = state.invested_value_usd / state.total_value_usd;
@@ -64,25 +68,21 @@ export async function compileVaultInstruction({
   }
   
   const amountToSwap = state.total_value_usd * deltaWeight;
+  // Convert USD chunk back to underlying asset wei (Assuming 1:1 for USDC base vaults)
   const amountInWei = ethers.parseUnits(amountToSwap.toFixed(state.decimals), state.decimals).toString();
   
-  // Deterministic trade parameters (MCP as Execution Desk)
-  const isHighRisk = deltaWeight > 0.2; // Strategy rule
+  const isHighRisk = deltaWeight > 0.2;
   const nonce = Date.now(); // Simplified nonce
-  
-  // Mocking path data for TraderJoe
   const mockData = ethers.hexlify(ethers.randomBytes(32)); 
   
-  // Compile the signature
-  // Note: Asset address for AVAX/USDC on Fuji would be needed.
-  // Using a common placeholder or the strategist's target if provided.
-  const targetAssetAddress = "0xd00ae08403B9bbb9124bB305C09058E32C39A48c"; // Mock AVAX on Fuji
+  // Resolve target asset address safely
+  const targetAssetAddress = FUJI_TOKENS[assetSymbol] || FUJI_TOKENS["AVAX"];
   
   const signature = await signTradeInstruction({
     vault: vaultAddress,
     asset: targetAssetAddress,
     amount: amountInWei,
-    minAmountOut: (amountToSwap * 0.985).toFixed(0), // 1.5% slippage computed by MCP
+    minAmountOut: (amountToSwap * 0.985).toFixed(0), // 1.5% slippage placeholder (units logic depends on pair)
     action: Action.SWAP,
     isHighRisk,
     nonce,
@@ -103,6 +103,6 @@ export async function compileVaultInstruction({
       data: mockData,
       signature
     },
-    summary: `Rebalancing ${state.vaultName}: Swapping ${amountToSwap.toFixed(2)} USDC for ${assetSymbol}`
+    summary: `Rebalancing ${state.vaultName}: Swapping ${amountToSwap.toFixed(2)} idle units for ${assetSymbol}`
   };
 }

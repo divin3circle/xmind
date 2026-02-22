@@ -1,3 +1,8 @@
 {
-  "schedule": "*/30 * * * * *"
+  "schedule": "0 */15 * * * *",
+  "vaultAddress": "0xe82a4a0c035536f6de8E540235e7a786dEc8b6DF",
+  "creIntegrationAddress": "0x3f9320845083AC5Fd0dF1Aa330fb3506157fe918",
+  "chainSelectorName": "avalanche-testnet-fuji",
+  "backendUrl": "https://your-production-url.com",
+  "mcpUrl": "https://your-mcp-url.workers.dev"
 }
