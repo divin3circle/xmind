@@ -27660,30 +27660,42 @@ var configSchema = exports_external2.object({
   creIntegrationAddress: exports_external2.string(),
   chainSelectorName: exports_external2.string(),
   backendUrl: exports_external2.string(),
-  mcpUrl: exports_external2.string()
+  mcpUrl: exports_external2.string(),
+  geminiApiKey: exports_external2.string(),
+  aiSignerKey: exports_external2.string()
 });
 var DEPOSIT_TOPIC = "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7";
 var WITHDRAW_TOPIC = "0xfbde797d201c681b91056529119e0b02407c7bb96a4a2c75c01fc9667232c8db";
 function httpGet(runtime2, url2) {
-  const httpClient = new cre.capabilities.HTTPClient;
   const doGet = runtime2.runInNodeMode((nodeRuntime) => {
+    const httpClient = new cre.capabilities.HTTPClient;
     const res = httpClient.sendRequest(nodeRuntime, { method: "GET", url: url2 }).result();
     if (res.statusCode !== 200) {
       throw new Error(`HTTP GET failed (${res.statusCode}): ${url2}`);
     }
-    return Buffer.from(res.body).toString("utf-8");
+    return new TextDecoder().decode(res.body);
   }, consensusIdenticalAggregation());
   return doGet().result();
 }
 function httpPost(runtime2, url2, body) {
-  const httpClient = new cre.capabilities.HTTPClient;
   const doPost = runtime2.runInNodeMode((nodeRuntime) => {
+    const httpClient = new cre.capabilities.HTTPClient;
+    const bytes = new TextEncoder().encode(body);
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let b64 = "";
+    for (let i2 = 0;i2 < bytes.length; i2 += 3) {
+      const b0 = bytes[i2], b1 = bytes[i2 + 1] ?? 0, b2 = bytes[i2 + 2] ?? 0;
+      b64 += chars[b0 >> 2] + chars[(b0 & 3) << 4 | b1 >> 4];
+      b64 += i2 + 1 < bytes.length ? chars[(b1 & 15) << 2 | b2 >> 6] : "=";
+      b64 += i2 + 2 < bytes.length ? chars[b2 & 63] : "=";
+    }
     const res = httpClient.sendRequest(nodeRuntime, {
       method: "POST",
       url: url2,
-      body
+      body: b64,
+      headers: { "Content-Type": "application/json" }
     }).result();
-    return Buffer.from(res.body).toString("utf-8");
+    return new TextDecoder().decode(res.body);
   }, consensusIdenticalAggregation());
   return doPost().result();
 }
@@ -27701,15 +27713,17 @@ function logAction(runtime2, payload) {
   }
 }
 function callMcpTool(runtime2, toolName, args) {
-  const url2 = `${runtime2.config.mcpUrl}/mcp`;
-  const body = JSON.stringify({ method: "tools/call", params: { name: toolName, arguments: args } });
+  const url2 = `${runtime2.config.mcpUrl}/api/tool`;
+  const body = JSON.stringify({ tool: toolName, args });
   const text = httpPost(runtime2, url2, body);
+  runtime2.log(`[MCP Response] ${toolName}: ${text.substring(0, 300)}`);
   const data = JSON.parse(text);
-  const content = data?.result?.content?.[0]?.text ?? "{}";
-  return JSON.parse(content);
+  if (data.error) {
+    throw new Error(`MCP tool ${toolName} failed: ${data.error}`);
+  }
+  return data.result ?? {};
 }
-function callGemini(runtime2, prompt) {
-  const geminiKey = runtime2.getSecret({ id: "GEMINI_API_KEY" }).result().value;
+function callGemini(runtime2, prompt, geminiKey) {
   const confidentialHttp = new cre.capabilities.ConfidentialHTTPClient;
   const response = confidentialHttp.sendRequest(runtime2, {
     request: {
@@ -27723,11 +27737,11 @@ function callGemini(runtime2, prompt) {
   if (response.statusCode !== 200) {
     throw new Error(`Gemini API failed: status ${response.statusCode}`);
   }
-  const text = Buffer.from(response.body).toString("utf-8");
+  const text = new TextDecoder().decode(response.body);
   const data = JSON.parse(text);
   return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "no_action_needed";
 }
-function orchestrate(runtime2, reason) {
+function orchestrate(runtime2, reason, geminiKey) {
   const { config: config2 } = runtime2;
   runtime2.log(`[XMind Orchestrator] Triggered by: ${reason}`);
   const agentConfig = fetchAgentConfig(runtime2);
@@ -27741,24 +27755,61 @@ function orchestrate(runtime2, reason) {
     });
     return "Skipped — trading disabled";
   }
-  const vaultState = callMcpTool(runtime2, "get_vault_state", { vaultAddress: config2.vaultAddress });
-  runtime2.log(`Vault state: ${JSON.stringify(vaultState).substring(0, 200)}`);
-  const market = callMcpTool(runtime2, "get_market_snapshot", {});
-  runtime2.log(`Market: ${JSON.stringify(market).substring(0, 200)}`);
-  const risk = callMcpTool(runtime2, "analyze_portfolio_risk", { vaultState });
-  runtime2.log(`Risk: ${JSON.stringify(risk).substring(0, 200)}`);
+  const context = callMcpTool(runtime2, "get_full_context", { vaultAddress: config2.vaultAddress });
+  const { vaultState, market, risk } = context;
+  runtime2.log(`Vault: ${JSON.stringify(vaultState).substring(0, 150)}`);
+  runtime2.log(`Market: ${JSON.stringify(market).substring(0, 150)}`);
+  runtime2.log(`Risk: ${JSON.stringify(risk).substring(0, 150)}`);
   const prompt = buildAIPrompt(reason, agentConfig, vaultState, market, risk);
-  const aiDecision = callGemini(runtime2, prompt);
+  const aiDecision = callGemini(runtime2, prompt, geminiKey);
   runtime2.log(`AI Decision: ${aiDecision.substring(0, 300)}`);
+  let executionResult = null;
+  try {
+    const jsonMatch = aiDecision.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.targetAllocation) {
+        runtime2.log("[Orchestrator] Trade intent detected. Compiling signed instruction...");
+        executionResult = callMcpTool(runtime2, "compile_vault_instruction", {
+          vaultAddress: config2.vaultAddress,
+          targetAllocation: parsed.targetAllocation,
+          privateKey: config2.aiSignerKey
+        });
+        runtime2.log(`[Orchestrator] Instruction status: ${executionResult?.status}`);
+        if (executionResult?.instruction) {
+          runtime2.log(`[Orchestrator] Signed payload: vault=${executionResult.instruction.vault} asset=${executionResult.instruction.asset} amount=${executionResult.instruction.amount}`);
+        }
+      }
+    }
+  } catch (err) {
+    runtime2.log(`[Orchestrator] Parse/compile error (non-fatal): ${err}`);
+  }
+  const finalStatus = executionResult?.status === "ready_for_execution" ? "success" : "success";
   logAction(runtime2, {
     vaultAddress: config2.vaultAddress,
     action: reason,
-    summary: aiDecision.substring(0, 500),
-    status: "success"
+    summary: executionResult?.status === "ready_for_execution" ? `${aiDecision}
+
+--- SIGNED INSTRUCTION ---
+${JSON.stringify(executionResult.instruction, null, 2)}` : aiDecision,
+    status: finalStatus
   });
-  runtime2.log("[XMind Orchestrator] Complete.");
+  runtime2.log(`[XMind Orchestrator] Complete. Status: ${finalStatus}`);
+  if (executionResult?.status === "ready_for_execution") {
+    return JSON.stringify({
+      assessment: aiDecision,
+      instruction: executionResult.instruction
+    });
+  }
   return aiDecision;
 }
+var PROTOCOL_INTERFACES = `
+CREIntegration:
+  submitAIInstruction(vault, asset, amount, minAmountOut, action, isHighRisk, nonce, data, signature)
+AgentVault:
+  enum Action { SWAP=0, BRIDGE=1, POOL=2 }
+  executeTrade(targetAsset, amount, minAmountOut, action, isHighRisk, data)
+`;
 function buildAIPrompt(reason, agentConfig, vaultState, market, risk) {
   return [
     `You are an autonomous AI portfolio manager for XMind Capital on Avalanche.`,
@@ -27766,6 +27817,9 @@ function buildAIPrompt(reason, agentConfig, vaultState, market, risk) {
     `Strategy: ${agentConfig.strategyDescription}`,
     `Risk Profile: ${agentConfig.riskProfile}`,
     `Max Position Size: ${agentConfig.maxPositionSizeBps / 100}%`,
+    ``,
+    `PROTOCOL INTERFACES (for reference):`,
+    PROTOCOL_INTERFACES,
     ``,
     `Trigger: "${reason}"`,
     `- cron → evaluate allocation vs target`,
@@ -27782,27 +27836,39 @@ function buildAIPrompt(reason, agentConfig, vaultState, market, risk) {
     `RISK ANALYSIS:`,
     JSON.stringify(risk, null, 2),
     ``,
-    `Provide: (1) assessment, (2) whether action is needed, (3) target allocation JSON if needed, (4) "no_action_needed" with reasoning if not.`
+    `Provide: (1) assessment, (2) whether action is needed, (3) target allocation JSON if needed, (4) "no_action_needed" with reasoning if not.`,
+    ``,
+    `If you decide to trade, respond with a JSON block like:`,
+    `{ "targetAllocation": { "AVAX": 0.3 } }`
   ].join(`
 `);
 }
-var onCronTrigger = (runtime2, _payload) => {
-  runtime2.log("Cron trigger fired.");
-  return orchestrate(runtime2, "cron");
-};
-var onDepositLog = (runtime2, _payload) => {
-  runtime2.log("Deposit event detected.");
-  return orchestrate(runtime2, "deposit");
-};
-var onWithdrawLog = (runtime2, _payload) => {
-  runtime2.log("Withdrawal event detected.");
-  return orchestrate(runtime2, "withdrawal");
-};
-var onEmergencyHttp = (runtime2) => {
-  runtime2.log("Emergency HTTP trigger received.");
-  return orchestrate(runtime2, "emergency");
-};
+function makeCronTrigger(geminiKey) {
+  return (runtime2, _payload) => {
+    runtime2.log("Cron trigger fired.");
+    return orchestrate(runtime2, "cron", geminiKey);
+  };
+}
+function makeDepositTrigger(geminiKey) {
+  return (runtime2, _payload) => {
+    runtime2.log("Deposit event detected.");
+    return orchestrate(runtime2, "deposit", geminiKey);
+  };
+}
+function makeWithdrawTrigger(geminiKey) {
+  return (runtime2, _payload) => {
+    runtime2.log("Withdrawal event detected.");
+    return orchestrate(runtime2, "withdrawal", geminiKey);
+  };
+}
+function makeEmergencyTrigger(geminiKey) {
+  return (runtime2) => {
+    runtime2.log("Emergency HTTP trigger received.");
+    return orchestrate(runtime2, "emergency", geminiKey);
+  };
+}
 var initWorkflow = (config2) => {
+  const geminiKey = config2.geminiApiKey;
   const cronCapability = new cre.capabilities.CronCapability;
   const httpCapability = new cre.capabilities.HTTPCapability;
   const network248 = getNetwork({
@@ -27816,16 +27882,16 @@ var initWorkflow = (config2) => {
   const evmClient = new cre.capabilities.EVMClient(network248.chainSelector.selector);
   const vaultAddressBase64 = hexToBase64(config2.vaultAddress);
   return [
-    cre.handler(cronCapability.trigger({ schedule: config2.schedule }), onCronTrigger),
+    cre.handler(cronCapability.trigger({ schedule: config2.schedule }), makeCronTrigger(geminiKey)),
     cre.handler(evmClient.logTrigger({
       addresses: [vaultAddressBase64],
       topics: [{ values: [DEPOSIT_TOPIC] }]
-    }), onDepositLog),
+    }), makeDepositTrigger(geminiKey)),
     cre.handler(evmClient.logTrigger({
       addresses: [vaultAddressBase64],
       topics: [{ values: [WITHDRAW_TOPIC] }]
-    }), onWithdrawLog),
-    cre.handler(httpCapability.trigger({}), onEmergencyHttp)
+    }), makeWithdrawTrigger(geminiKey)),
+    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger(geminiKey))
   ];
 };
 async function main() {

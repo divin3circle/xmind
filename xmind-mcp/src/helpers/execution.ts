@@ -18,7 +18,6 @@ export async function simulateTrade({
 }) {
   const currentState = await getVaultState(vaultAddress);
   
-  // Predict post-trade state
   const postInvested = currentState.invested_value_usd + amountUsd;
   const postCash = currentState.cash_position_usd - amountUsd;
   
@@ -34,11 +33,16 @@ export async function simulateTrade({
   };
 }
 
+// Deployed mock tokens on Avalanche Fuji
 const FUJI_TOKENS: Record<string, string> = {
-  "AVAX": "0xd00ae08403B9bbb9124bB305C09058E32C39A48c", // WAVAX on Fuji
-  "USDC": "0xF130b00B32EFE015FC080f7Dd210B0E937e627c2",
-  "LINK": "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
-  "WSTETH": "0x3f9320845083AC5Fd0dF1Aa330fb3506157fe918" // Placeholder ETH
+  "AVAX":  "0xDcc1704257b818271359f117F349f16499bF128E", // mWAVAX
+  "ETH":   "0x5bC55a2641b20e0E2DCc977548aA672c3A7F03EC", // mWETH
+  "BTC":   "0xc92bef678CCF43251cB8f1d321B995D192784453", // mWBTC
+  "WBTC":  "0xc92bef678CCF43251cB8f1d321B995D192784453", // mWBTC alias
+  "WETH":  "0x5bC55a2641b20e0E2DCc977548aA672c3A7F03EC", // mWETH alias
+  "WAVAX": "0xDcc1704257b818271359f117F349f16499bF128E", // mWAVAX alias
+  "LINK":  "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
+  "USDC":  "0xF130b00B32EFE015FC080f7Dd210B0E937e627c2",
 };
 
 /**
@@ -47,7 +51,7 @@ const FUJI_TOKENS: Record<string, string> = {
  */
 export async function compileVaultInstruction({
   vaultAddress,
-  targetAllocation, // e.g., { AVAX: 0.3 }
+  targetAllocation,
   privateKey
 }: {
   vaultAddress: string;
@@ -55,34 +59,38 @@ export async function compileVaultInstruction({
   privateKey: string;
 }) {
   const state = await getVaultState(vaultAddress);
-  
-  // Logic: Compare current vs target and determine the delta trade
-  const assetSymbol = Object.keys(targetAllocation)[0]?.toUpperCase() || "AVAX";
-  const targetWeight = targetAllocation[assetSymbol];
-  
-  const currentInvestedWeight = state.invested_value_usd / state.total_value_usd;
+  const decimals = Number(state.decimals); // BigInt → Number
+
+  // Process the first asset in the allocation
+  const rawKey = Object.keys(targetAllocation)[0] || "AVAX";
+  const assetSymbol = rawKey.toUpperCase();
+  const targetWeight = targetAllocation[rawKey] ?? 0.1;
+
+  const currentInvestedWeight = state.total_value_usd > 0
+    ? state.invested_value_usd / state.total_value_usd
+    : 0;
   const deltaWeight = targetWeight - currentInvestedWeight;
-  
+
   if (deltaWeight <= 0) {
-    return { status: "no_action_needed", reason: "Current allocation matches or exceeds target" };
+    return { status: "no_action_needed", reason: "Current allocation meets or exceeds target" };
   }
-  
+
   const amountToSwap = state.total_value_usd * deltaWeight;
-  // Convert USD chunk back to underlying asset wei (Assuming 1:1 for USDC base vaults)
-  const amountInWei = ethers.parseUnits(amountToSwap.toFixed(state.decimals), state.decimals).toString();
-  
+  const amountInWei = ethers.parseUnits(amountToSwap.toFixed(decimals), decimals).toString();
+  const minAmountOut = Math.max(1, Math.floor(amountToSwap * 0.985)).toString();
+
   const isHighRisk = deltaWeight > 0.2;
-  const nonce = Date.now(); // Simplified nonce
-  const mockData = ethers.hexlify(ethers.randomBytes(32)); 
-  
-  // Resolve target asset address safely
+  const nonce = Date.now();
+  const mockData = ethers.hexlify(ethers.randomBytes(32));
+
+  // Resolve target asset address from our deployed mocks
   const targetAssetAddress = FUJI_TOKENS[assetSymbol] || FUJI_TOKENS["AVAX"];
-  
+
   const signature = await signTradeInstruction({
     vault: vaultAddress,
     asset: targetAssetAddress,
     amount: amountInWei,
-    minAmountOut: (amountToSwap * 0.985).toFixed(0), // 1.5% slippage placeholder (units logic depends on pair)
+    minAmountOut,
     action: Action.SWAP,
     isHighRisk,
     nonce,
@@ -95,14 +103,16 @@ export async function compileVaultInstruction({
     instruction: {
       vault: vaultAddress,
       asset: targetAssetAddress,
+      assetSymbol,
       amount: amountInWei,
-      minAmountOut: (amountToSwap * 0.985).toFixed(0),
+      minAmountOut,
       action: "SWAP",
+      actionId: 0,
       isHighRisk,
       nonce,
       data: mockData,
       signature
     },
-    summary: `Rebalancing ${state.vaultName}: Swapping ${amountToSwap.toFixed(2)} idle units for ${assetSymbol}`
+    summary: `Rebalancing ${state.vaultName}: Swapping ${amountToSwap.toFixed(2)} mUSDC → ${assetSymbol}`
   };
 }

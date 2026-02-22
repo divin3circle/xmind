@@ -2,3 +2,5 @@
 node_modules
 xmind-workflow/node_modules
 xmind-workflow/bun.lock
+xmind-workflow/config.staging.json
+config.staging.json

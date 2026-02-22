@@ -21,6 +21,8 @@ const configSchema = z.object({
   chainSelectorName: z.string(),
   backendUrl: z.string(),
   mcpUrl: z.string(),
+  geminiApiKey: z.string(),
+  aiSignerKey: z.string(),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -62,11 +64,22 @@ function httpPost(runtime: Runtime<Config>, url: string, body: string): string {
   const doPost = runtime.runInNodeMode(
     (nodeRuntime: NodeRuntime<Config>) => {
       const httpClient = new cre.capabilities.HTTPClient();
+      // CRE expects body as base64 — encode manually (btoa/Buffer unavailable in WASM)
+      const bytes = new TextEncoder().encode(body);
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      let b64 = "";
+      for (let i = 0; i < bytes.length; i += 3) {
+        const b0 = bytes[i], b1 = bytes[i + 1] ?? 0, b2 = bytes[i + 2] ?? 0;
+        b64 += chars[b0 >> 2] + chars[((b0 & 3) << 4) | (b1 >> 4)];
+        b64 += i + 1 < bytes.length ? chars[((b1 & 15) << 2) | (b2 >> 6)] : "=";
+        b64 += i + 2 < bytes.length ? chars[b2 & 63] : "=";
+      }
       const res = httpClient
         .sendRequest(nodeRuntime, {
           method: "POST",
           url,
-          body,
+          body: b64,
+          headers: { "Content-Type": "application/json" },
         })
         .result();
       return new TextDecoder().decode(res.body);
@@ -107,20 +120,23 @@ function logAction(runtime: Runtime<Config>, payload: {
 }
 
 function callMcpTool(runtime: Runtime<Config>, toolName: string, args: Record<string, unknown>): unknown {
-  const url = `${runtime.config.mcpUrl}/mcp`;
-  const body = JSON.stringify({ method: "tools/call", params: { name: toolName, arguments: args } });
+  // Use the simple REST endpoint (bypasses MCP protocol session handshake)
+  const url = `${runtime.config.mcpUrl}/api/tool`;
+  const body = JSON.stringify({ tool: toolName, args });
   const text = httpPost(runtime, url, body);
-  const data = JSON.parse(text) as { result?: { content?: Array<{ text: string }> } };
-  const content = data?.result?.content?.[0]?.text ?? "{}";
-  return JSON.parse(content);
+  runtime.log(`[MCP Response] ${toolName}: ${text.substring(0, 300)}`);
+  const data = JSON.parse(text) as { result?: unknown; error?: string };
+  if (data.error) {
+    throw new Error(`MCP tool ${toolName} failed: ${data.error}`);
+  }
+  return data.result ?? {};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GEMINI AI — Via ConfidentialHTTPClient (keeps API key private from nodes)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function callGemini(runtime: Runtime<Config>, prompt: string): string {
-  const geminiKey = runtime.getSecret({ id: "GEMINI_API_KEY" }).result().value;
+function callGemini(runtime: Runtime<Config>, prompt: string, geminiKey: string): string {
 
   const confidentialHttp = new cre.capabilities.ConfidentialHTTPClient();
   const response = confidentialHttp
@@ -150,7 +166,7 @@ function callGemini(runtime: Runtime<Config>, prompt: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 // CORE ORCHESTRATOR — Single decision engine for all triggers
 // ─────────────────────────────────────────────────────────────────────────────
-function orchestrate(runtime: Runtime<Config>, reason: TriggerReason): string {
+function orchestrate(runtime: Runtime<Config>, reason: TriggerReason, geminiKey: string): string {
   const { config } = runtime;
   runtime.log(`[XMind Orchestrator] Triggered by: ${reason}`);
 
@@ -167,38 +183,84 @@ function orchestrate(runtime: Runtime<Config>, reason: TriggerReason): string {
     return "Skipped — trading disabled";
   }
 
-  // 2. Get vault state from MCP
-  const vaultState = callMcpTool(runtime, "get_vault_state", { vaultAddress: config.vaultAddress });
-  runtime.log(`Vault state: ${JSON.stringify(vaultState).substring(0, 200)}`);
+  // 2. Get full context in ONE MCP call  (HTTP call 1)
+  //    Merges: vault state + market snapshot + risk analysis
+  const context = callMcpTool(runtime, "get_full_context", { vaultAddress: config.vaultAddress }) as any;
+  const { vaultState, market, risk } = context;
+  runtime.log(`Vault: ${JSON.stringify(vaultState).substring(0, 150)}`);
+  runtime.log(`Market: ${JSON.stringify(market).substring(0, 150)}`);
+  runtime.log(`Risk: ${JSON.stringify(risk).substring(0, 150)}`);
 
-  // 3. Get market conditions from MCP
-  const market = callMcpTool(runtime, "get_market_snapshot", {});
-  runtime.log(`Market: ${JSON.stringify(market).substring(0, 200)}`);
-
-  // 4. Analyze risk from MCP
-  const risk = callMcpTool(runtime, "analyze_portfolio_risk", { vaultState });
-  runtime.log(`Risk: ${JSON.stringify(risk).substring(0, 200)}`);
-
-  // 5. Ask Gemini for a strategic decision
+  // 3. Ask Gemini for a strategic decision  (HTTP call 2)
   const prompt = buildAIPrompt(reason, agentConfig, vaultState, market, risk);
-  const aiDecision = callGemini(runtime, prompt);
+  const aiDecision = callGemini(runtime, prompt, geminiKey);
   runtime.log(`AI Decision: ${aiDecision.substring(0, 300)}`);
 
-  // 6. Log outcome to MongoDB via backend
+  // 4. Parse decision — if Gemini wants to trade, compile a signed instruction
+  let executionResult: any = null;
+  try {
+    const jsonMatch = aiDecision.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.targetAllocation) {
+        runtime.log("[Orchestrator] Trade intent detected. Compiling signed instruction...");
+
+        // (HTTP call 3) — MCP compiles, signs, and returns the ready-to-submit payload
+        executionResult = callMcpTool(runtime, "compile_vault_instruction", {
+          vaultAddress: config.vaultAddress,
+          targetAllocation: parsed.targetAllocation,
+          privateKey: config.aiSignerKey
+        });
+
+        runtime.log(`[Orchestrator] Instruction status: ${executionResult?.status}`);
+        if (executionResult?.instruction) {
+          runtime.log(`[Orchestrator] Signed payload: vault=${executionResult.instruction.vault} asset=${executionResult.instruction.asset} amount=${executionResult.instruction.amount}`);
+        }
+      }
+    }
+  } catch (err) {
+    runtime.log(`[Orchestrator] Parse/compile error (non-fatal): ${err}`);
+  }
+
+  // 5. Log outcome to MongoDB  (HTTP call 4)
+  const finalStatus = executionResult?.status === "ready_for_execution"
+    ? "success"
+    : "success";
+
   logAction(runtime, {
     vaultAddress: config.vaultAddress,
     action: reason,
-    summary: aiDecision.substring(0, 500),
-    status: "success",
+    summary: executionResult?.status === "ready_for_execution"
+      ? `${aiDecision}\n\n--- SIGNED INSTRUCTION ---\n${JSON.stringify(executionResult.instruction, null, 2)}`
+      : aiDecision,
+    status: finalStatus,
   });
 
-  runtime.log("[XMind Orchestrator] Complete.");
+  runtime.log(`[XMind Orchestrator] Complete. Status: ${finalStatus}`);
+
+  if (executionResult?.status === "ready_for_execution") {
+    return JSON.stringify({
+      assessment: aiDecision,
+      instruction: executionResult.instruction
+    });
+  }
+
   return aiDecision;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI PROMPT BUILDER
 // ─────────────────────────────────────────────────────────────────────────────
+// Static contract interfaces — inlined to avoid an extra HTTP call
+// (CRE simulator limits HTTP calls to 5 per execution)
+const PROTOCOL_INTERFACES = `
+CREIntegration:
+  submitAIInstruction(vault, asset, amount, minAmountOut, action, isHighRisk, nonce, data, signature)
+AgentVault:
+  enum Action { SWAP=0, BRIDGE=1, POOL=2 }
+  executeTrade(targetAsset, amount, minAmountOut, action, isHighRisk, data)
+`;
+
 function buildAIPrompt(
   reason: TriggerReason,
   agentConfig: { systemPrompt: string; riskProfile: string; strategyDescription: string; maxPositionSizeBps: number },
@@ -212,6 +274,9 @@ function buildAIPrompt(
     `Strategy: ${agentConfig.strategyDescription}`,
     `Risk Profile: ${agentConfig.riskProfile}`,
     `Max Position Size: ${agentConfig.maxPositionSizeBps / 100}%`,
+    ``,
+    `PROTOCOL INTERFACES (for reference):`,
+    PROTOCOL_INTERFACES,
     ``,
     `Trigger: "${reason}"`,
     `- cron → evaluate allocation vs target`,
@@ -229,36 +294,51 @@ function buildAIPrompt(
     JSON.stringify(risk, null, 2),
     ``,
     `Provide: (1) assessment, (2) whether action is needed, (3) target allocation JSON if needed, (4) "no_action_needed" with reasoning if not.`,
+    ``,
+    `If you decide to trade, respond with a JSON block like:`,
+    `{ "targetAllocation": { "AVAX": 0.3 } }`,
   ].join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TRIGGER CALLBACKS
 // ─────────────────────────────────────────────────────────────────────────────
-const onCronTrigger = (runtime: Runtime<Config>, _payload: CronPayload): string => {
-  runtime.log("Cron trigger fired.");
-  return orchestrate(runtime, "cron");
-};
+// Trigger callbacks are now factory functions that close over the geminiKey
+function makeCronTrigger(geminiKey: string) {
+  return (runtime: Runtime<Config>, _payload: CronPayload): string => {
+    runtime.log("Cron trigger fired.");
+    return orchestrate(runtime, "cron", geminiKey);
+  };
+}
 
-const onDepositLog = (runtime: Runtime<Config>, _payload: EVMLog): string => {
-  runtime.log("Deposit event detected.");
-  return orchestrate(runtime, "deposit");
-};
+function makeDepositTrigger(geminiKey: string) {
+  return (runtime: Runtime<Config>, _payload: EVMLog): string => {
+    runtime.log("Deposit event detected.");
+    return orchestrate(runtime, "deposit", geminiKey);
+  };
+}
 
-const onWithdrawLog = (runtime: Runtime<Config>, _payload: EVMLog): string => {
-  runtime.log("Withdrawal event detected.");
-  return orchestrate(runtime, "withdrawal");
-};
+function makeWithdrawTrigger(geminiKey: string) {
+  return (runtime: Runtime<Config>, _payload: EVMLog): string => {
+    runtime.log("Withdrawal event detected.");
+    return orchestrate(runtime, "withdrawal", geminiKey);
+  };
+}
 
-const onEmergencyHttp = (runtime: Runtime<Config>): string => {
-  runtime.log("Emergency HTTP trigger received.");
-  return orchestrate(runtime, "emergency");
-};
+function makeEmergencyTrigger(geminiKey: string) {
+  return (runtime: Runtime<Config>): string => {
+    runtime.log("Emergency HTTP trigger received.");
+    return orchestrate(runtime, "emergency", geminiKey);
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WORKFLOW INIT — 4 triggers, 1 orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
 const initWorkflow = (config: Config) => {
+  // Read the Gemini API key from config (avoids DON secrets system for simulation)
+  const geminiKey = config.geminiApiKey;
+
   const cronCapability = new cre.capabilities.CronCapability();
   const httpCapability = new cre.capabilities.HTTPCapability();
 
@@ -277,7 +357,7 @@ const initWorkflow = (config: Config) => {
 
   return [
     // 0 — Cron: Scheduled rebalance
-    cre.handler(cronCapability.trigger({ schedule: config.schedule }), onCronTrigger),
+    cre.handler(cronCapability.trigger({ schedule: config.schedule }), makeCronTrigger(geminiKey)),
 
     // 1 — EVM Log: Deposit event
     cre.handler(
@@ -285,7 +365,7 @@ const initWorkflow = (config: Config) => {
         addresses: [vaultAddressBase64],
         topics: [{ values: [DEPOSIT_TOPIC] }],
       }),
-      onDepositLog
+      makeDepositTrigger(geminiKey)
     ),
 
     // 2 — EVM Log: Withdrawal event
@@ -294,11 +374,11 @@ const initWorkflow = (config: Config) => {
         addresses: [vaultAddressBase64],
         topics: [{ values: [WITHDRAW_TOPIC] }],
       }),
-      onWithdrawLog
+      makeWithdrawTrigger(geminiKey)
     ),
 
     // 3 — HTTP: Emergency
-    cre.handler(httpCapability.trigger({}), onEmergencyHttp),
+    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger(geminiKey)),
   ];
 };
 

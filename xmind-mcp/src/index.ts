@@ -25,6 +25,23 @@ export class MyMCP extends McpAgent {
   });
 
   async init() {
+    // --- Merged Context Tool (saves HTTP calls for CRE workflow) ---
+    this.server.tool(
+      "get_full_context",
+      "Returns vault state, market snapshot, and risk analysis in a single call. Optimized for CRE workflows with limited HTTP budget.",
+      {
+        vaultAddress: z.string().describe("The ERC-4626 vault contract address"),
+      },
+      async ({ vaultAddress }) => {
+        const [vaultState, market] = await Promise.all([
+          getVaultState(vaultAddress),
+          getMarketSnapshot()
+        ]);
+        const risk = await analyzePortfolioRisk(vaultState);
+        return { content: [{ type: "text", text: JSON.stringify({ vaultState, market, risk }) }] };
+      },
+    );
+
     // --- Portfolio State Tools ---
     this.server.tool(
       "get_vault_state",
@@ -178,6 +195,31 @@ export class MyMCP extends McpAgent {
       );
 
     this.server.tool(
+      "get_contract_interfaces",
+      "Returns the ABIs for the core protocol contracts (CREIntegration, AgentVault) to assist in encoding on-chain instructions.",
+      {},
+      async () => {
+        // Return ABIs directly for LLM context
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                CREIntegration: [
+                  "function submitAIInstruction(address vault, address asset, uint256 amount, uint256 minAmountOut, uint8 action, bool isHighRisk, uint256 nonce, bytes data, bytes signature) external"
+                ],
+                AgentVault: [
+                  "enum Action { SWAP, BRIDGE, POOL }",
+                  "function executeTrade(address targetAsset, uint256 amount, uint256 minAmountOut, Action action, bool isHighRisk, bytes data) external"
+                ]
+              }, null, 2)
+            }
+          ]
+        };
+      }
+    );
+
+    this.server.tool(
       "simulate_transaction",
       "Utility: Low-level EVM transaction simulation (for developers).",
       {
@@ -194,8 +236,65 @@ export class MyMCP extends McpAgent {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool registry for direct REST calls from CRE workflow (bypasses MCP protocol)
+// ─────────────────────────────────────────────────────────────────────────────
+const toolHandlers: Record<string, (args: any) => Promise<any>> = {
+  get_vault_state: async (args) => {
+    const result = await getVaultState(args.vaultAddress);
+    return result;
+  },
+  get_vault_performance: async (args) => {
+    const result = await getVaultPerformance(args.vaultAddress);
+    return result;
+  },
+  get_market_snapshot: async () => {
+    const result = await getMarketSnapshot();
+    return result;
+  },
+  get_yield_opportunities: async () => {
+    const result = await getYieldOpportunities();
+    return result;
+  },
+  analyze_portfolio_risk: async (args) => {
+    const result = await analyzePortfolioRisk(args.vaultState);
+    return result;
+  },
+  check_liquidity_impact: async (args) => {
+    const result = await checkLiquidityImpact(args.asset, args.amount);
+    return result;
+  },
+  simulate_trade: async (args) => {
+    const result = await simulateTrade(args);
+    return result;
+  },
+  compile_vault_instruction: async (args) => {
+    const result = await compileVaultInstruction(args);
+    return result;
+  },
+  get_full_context: async (args) => {
+    const [vaultState, market] = await Promise.all([
+      getVaultState(args.vaultAddress),
+      getMarketSnapshot()
+    ]);
+    const risk = await analyzePortfolioRisk(vaultState);
+    return { vaultState, market, risk };
+  },
+  get_contract_interfaces: async () => {
+    return {
+      CREIntegration: [
+        "function submitAIInstruction(address vault, address asset, uint256 amount, uint256 minAmountOut, uint8 action, bool isHighRisk, uint256 nonce, bytes data, bytes signature) external"
+      ],
+      AgentVault: [
+        "enum Action { SWAP, BRIDGE, POOL }",
+        "function executeTrade(address targetAsset, uint256 amount, uint256 minAmountOut, Action action, bool isHighRisk, bytes data) external"
+      ]
+    };
+  },
+};
+
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
     if (url.pathname === "/sse" || url.pathname === "/sse/message") {
@@ -204,6 +303,27 @@ export default {
 
     if (url.pathname === "/mcp") {
       return MyMCP.serve("/mcp").fetch(request, env, ctx);
+    }
+
+    // Simple REST endpoint for CRE workflow tool calls (no MCP session needed)
+    if (url.pathname === "/api/tool" && request.method === "POST") {
+      try {
+        const body = await request.json() as { tool: string; args?: Record<string, any> };
+        const handler = toolHandlers[body.tool];
+        if (!handler) {
+          return Response.json({ error: `Unknown tool: ${body.tool}` }, { status: 400 });
+        }
+        const result = await handler(body.args || {});
+        // BigInt-safe serialization (ethers.js returns BigInt from RPC calls)
+        const jsonStr = JSON.stringify({ result }, (_key, value) =>
+          typeof value === "bigint" ? value.toString() : value
+        );
+        return new Response(jsonStr, {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (err: any) {
+        return Response.json({ error: err.message || String(err) }, { status: 500 });
+      }
     }
 
     return new Response("Not found", { status: 404 });
