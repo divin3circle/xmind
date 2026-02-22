@@ -4,5 +4,5 @@
   "creIntegrationAddress": "0x3f9320845083AC5Fd0dF1Aa330fb3506157fe918",
   "chainSelectorName": "avalanche-testnet-fuji",
   "backendUrl": "http://localhost:3000",
-  "mcpUrl": "http://localhost:8787"
+  "mcpUrl": "http://localhost:3001"
 }

@@ -23,7 +23,7 @@ export async function getVaultState(
   
   const [nav, underlying, highRisk, stable, profile, name] = await Promise.all([
     contract.totalAssets().catch(() => 0n),
-    contract.asset().catch(() => "0x5425890298aed601595a70ab815c96711a31Bc65"),
+    contract.asset().catch(() => "0xF130b00B32EFE015FC080f7Dd210B0E937e627c2"),
     contract.totalHighRiskAllocation().catch(() => 0n),
     contract.totalStableAllocation().catch(() => 0n),
     contract.riskProfile().catch(() => 1),

@@ -7,26 +7,48 @@ import { IVaultAgent } from "@/lib/types/vault";
 import { IconArrowDown, IconArrowUp, IconLoader2 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useActiveAccount } from "thirdweb/react";
+import { useVault } from "@/hooks/useVault";
 
 export function VaultActions({ vault }: { vault: IVaultAgent }) {
-  const [amount, setAmount] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const activeAccount = useActiveAccount();
+  const { deposit, withdraw, isProcessing, userVaultShares, userBalance, tokenDecimals } = useVault(vault.vaultAddress, vault.underlyingToken);
 
-  const handleTransaction = async (type: "deposit" | "withdraw") => {
+  const handleDeposit = async () => {
     if (!activeAccount) return toast.error("Connect wallet to interact with Vault");
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      return toast.error("Enter a valid amount");
+    if (!depositAmount || isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
+      return toast.error("Enter a valid deposit amount");
     }
 
-    setIsProcessing(true);
-    // Mocking the interaction for UI demonstration
-    setTimeout(() => {
-      setIsProcessing(false);
-      setAmount("");
-      toast.success(`${type === "deposit" ? "Deposited" : "Withdrew"} ${amount} token successfully to ${vault.name}.`);
-    }, 2500);
+    try {
+      const receipt = await deposit(depositAmount);
+      toast.success(`Deposited ${depositAmount} tokens cleanly into ${vault.name}. Tx: ${receipt.transactionHash.slice(0,6)}...`);
+      setDepositAmount("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to finalize deposit parameters");
+    }
   };
+
+  const handleWithdraw = async () => {
+    if (!activeAccount) return toast.error("Connect wallet to interact with Vault");
+    if (!withdrawAmount || isNaN(Number(withdrawAmount)) || Number(withdrawAmount) <= 0) {
+      return toast.error("Enter a valid withdraw share amount");
+    }
+
+    try {
+      const receipt = await withdraw(withdrawAmount);
+      toast.success(`Withdrew ${withdrawAmount} LP shares directly back to underlying base asset. Tx: ${receipt.transactionHash.slice(0,6)}...`);
+      setWithdrawAmount("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to finalize withdraw parameters");
+    }
+  };
+
+  const formattedBalance = userBalance && tokenDecimals ? (Number(userBalance) / 10 ** tokenDecimals).toFixed(4) : "0.0000";
+  const formattedShares = userVaultShares && tokenDecimals ? (Number(userVaultShares) / 10 ** tokenDecimals).toFixed(4) : "0.0000";
 
   return (
     <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl">
@@ -34,19 +56,19 @@ export function VaultActions({ vault }: { vault: IVaultAgent }) {
         <IconArrowDown className="text-green-500 w-8 h-8 mb-4 border border-dashed p-1 rounded-full border-green-500" />
         <h3 className="text-sm font-semibold mb-2">Deposit Capital</h3>
         <p className="text-[10px] text-muted-foreground text-center mb-4">
-          Deposit your Fuji Testnet tokens into this agent&apos;s vault. Funds are managed via Chainlink CRE.
+          Deposit your Fuji Testnet tokens. Balance: <span className="font-mono text-foreground font-bold">{formattedBalance}</span>
         </p>
         <div className="flex w-full gap-2">
           <Input 
             placeholder="0.0" 
             type="number" 
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)} 
+            value={depositAmount} 
+            onChange={(e) => setDepositAmount(e.target.value)} 
             className="border-dashed bg-background"
           />
           <Button 
             disabled={isProcessing} 
-            onClick={() => handleTransaction("deposit")} 
+            onClick={handleDeposit} 
             className="bg-green-600 hover:bg-green-700 text-white font-sans w-24"
           >
             {isProcessing ? <IconLoader2 className="animate-spin w-4 h-4" /> : "Deposit"}
@@ -58,20 +80,20 @@ export function VaultActions({ vault }: { vault: IVaultAgent }) {
         <IconArrowUp className="text-red-500 w-8 h-8 mb-4 border border-dashed p-1 rounded-full border-red-500" />
         <h3 className="text-sm font-semibold mb-2">Withdraw Position</h3>
         <p className="text-[10px] text-muted-foreground text-center mb-4">
-          Withdraw your LP tokens back to the underlying base asset. Subject to oracle settlement cooldowns.
+          Redeem LP shares. Wallet Shares: <span className="font-mono text-foreground font-bold">{formattedShares}</span>
         </p>
         <div className="flex w-full gap-2">
           <Input 
             placeholder="0.0" 
             type="number" 
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)} 
+            value={withdrawAmount} 
+            onChange={(e) => setWithdrawAmount(e.target.value)} 
             className="border-dashed bg-background"
           />
           <Button 
             variant="outline"
             disabled={isProcessing} 
-            onClick={() => handleTransaction("withdraw")} 
+            onClick={handleWithdraw} 
             className="border-red-500 text-red-500 hover:bg-red-500/10 border-dashed font-sans w-24"
           >
             {isProcessing ? <IconLoader2 className="animate-spin w-4 h-4" /> : "Withdraw"}

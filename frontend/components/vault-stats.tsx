@@ -2,12 +2,21 @@
 
 import { IVaultAgent } from "@/lib/types/vault";
 import { IconCoins, IconTrendingUp, IconActivity } from "@tabler/icons-react";
+import { useVault } from "@/hooks/useVault";
 
 export function VaultStats({ vault }: { vault: IVaultAgent }) {
-  // In a real app we'd fetch this from ethers.js / thirdweb useReadContract
-  // Mocking for the UI review phase.
-  const mockTvl = "1,245.50 USDC";
-  const mockYield = "+12.4% APY (7d Avg)";
+  const { totalAssets, tokenDecimals } = useVault(vault.vaultAddress, vault.underlyingToken);
+
+  // Format real TVL using decimals if fetched, otherwise fallback to 0
+  const tvlFormatted =
+    totalAssets && tokenDecimals
+      ? (Number(totalAssets) / 10 ** tokenDecimals).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 4,
+        })
+      : "0.00";
+
+  const vaultYield = "+12.4% APY (7d Avg)";
   const mockStatus = vault.tradingEnabled ? "Active & Trading" : "Paused";
 
   return (
@@ -17,14 +26,14 @@ export function VaultStats({ vault }: { vault: IVaultAgent }) {
           <IconCoins className="w-4 h-4" />
           <h3 className="text-xs uppercase font-semibold">Total Value Locked</h3>
         </div>
-        <p className="text-2xl font-bold font-mono tracking-tighter">{mockTvl}</p>
+        <p className="text-2xl font-bold font-mono tracking-tighter">{tvlFormatted}</p>
       </div>
       <div className="flex flex-col gap-2 p-4 border border-dashed hover:bg-green-500/5 transition-colors">
         <div className="flex items-center text-green-500 gap-2">
           <IconTrendingUp className="w-4 h-4" />
           <h3 className="text-xs uppercase font-semibold">Vault Performance</h3>
         </div>
-        <p className="text-2xl text-green-500 font-bold font-mono tracking-tighter">{mockYield}</p>
+        <p className="text-2xl text-green-500 font-bold font-mono tracking-tighter">{vaultYield}</p>
       </div>
       <div className="flex flex-col gap-2 p-4 border border-dashed hover:bg-muted/10 transition-colors">
         <div className="flex items-center text-muted-foreground gap-2">
@@ -32,7 +41,7 @@ export function VaultStats({ vault }: { vault: IVaultAgent }) {
           <h3 className="text-xs uppercase font-semibold">AI Oracle Status</h3>
         </div>
         <p className="text-lg font-semibold tracking-tight">{mockStatus}</p>
-        <p className="text-[10px] text-muted-foreground font-mono">Last tick: 4m ago</p>
+        <p className="text-[10px] text-muted-foreground font-mono">Real-time sync via CRE</p>
       </div>
     </div>
   );

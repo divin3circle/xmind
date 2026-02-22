@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardNavbar from "../../dashboard/navbar";
 import { VaultStats } from "@/components/vault-stats";
 import { VaultActions } from "@/components/vault-actions";
+import { VaultHistory } from "@/components/vault-history";
 import { IVaultAgent } from "@/lib/types/vault";
 import { IconArrowLeft, IconExternalLink, IconLoader2 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -106,10 +107,7 @@ function VaultPage() {
 
         {/* Placeholder for Timeline/Execution Logs */}
         <h2 className="text-lg font-semibold mb-4 mt-12 font-sans border-b border-dashed pb-2 w-full max-w-5xl">AI Execution Logs</h2>
-        <div className="w-full max-w-5xl border border-dashed p-8 bg-muted/10 text-center text-xs text-muted-foreground flex flex-col items-center justify-center min-h-[200px]">
-          <p>No recent execution logs.</p>
-          <p className="mt-2 text-[10px] opacity-70">The Chainlink CRE Runtime will append thought processes and swap receipts here.</p>
-        </div>
+        <VaultHistory vaultAddress={vault.vaultAddress} />
 
       </div>
     </div>

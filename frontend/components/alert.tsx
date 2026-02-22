@@ -28,7 +28,7 @@ type VaultReviewValues = {
 
 // Fuji Testnet Tokens mapping (Duplicated for alert display purposes)
 const TOKENS: Record<string, string> = {
-  "0x5425890298aed601595a70ab815c96711a31Bc65": "USDC",
+  "0xF130b00B32EFE015FC080f7Dd210B0E937e627c2": "USDC",
   "0xd00ae08403B9bbb9124bB305C09058E32C39A48c": "WAVAX",
 };
 

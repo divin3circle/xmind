@@ -101,7 +101,7 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
 }
 
 const FUJI_TOKENS: Record<string, string> = {
-  "0x5425890298aed601595a70ab815c96711a31bc65": "USDC",
+  "0xf130b00b32efe015fc080f7dd210b0e937e627c2": "USDC",
   "0xd00ae08403b9bbb9124bb305c09058e32c39a48c": "WAVAX",
 };
 

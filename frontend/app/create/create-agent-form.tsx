@@ -60,7 +60,7 @@ type FormValues = z.infer<typeof vaultFormSchema>;
 
 // Fuji Testnet Tokens mapping
 const TOKENS: Record<string, { address: string; symbol: string; name: string }> = {
-  USDC: { address: "0x5425890298aed601595a70ab815c96711a31Bc65", symbol: "USDC", name: "USD Coin" },
+  USDC: { address: "0xF130b00B32EFE015FC080f7Dd210B0E937e627c2", symbol: "USDC", name: "USD Coin" },
   WAVAX: { address: "0xd00ae08403B9bbb9124bB305C09058E32C39A48c", symbol: "WAVAX", name: "Wrapped AVAX" },
 };
 
@@ -335,6 +335,8 @@ function StepFour({
       description: values.description,
       image: values.image || "",
       systemPrompt: values.systemPrompt,
+      underlyingToken: values.underlyingToken,
+      riskProfile: values.riskProfile,
       agentWalletAddress: activeAccount.address, // Owner of the vault
       onSuccess: async (transactionHash, contractAddress) => {
         try {

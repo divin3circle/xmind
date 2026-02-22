@@ -32,21 +32,23 @@ const DEPOSIT_TOPIC = "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a09528475454
 const WITHDRAW_TOPIC = "0xfbde797d201c681b91056529119e0b02407c7bb96a4a2c75c01fc9667232c8db";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HTTP HELPERS — Using CRE HTTPClient with runInNodeMode for simple requests
+// HTTP HELPERS — Using CRE HTTPClient inside runInNodeMode
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Make a GET request via CRE's node-mode execution.
+ * The HTTPClient MUST be instantiated inside the runInNodeMode callback.
  */
 function httpGet(runtime: Runtime<Config>, url: string): string {
-  const httpClient = new cre.capabilities.HTTPClient();
   const doGet = runtime.runInNodeMode(
     (nodeRuntime: NodeRuntime<Config>) => {
+      const httpClient = new cre.capabilities.HTTPClient();
       const res = httpClient.sendRequest(nodeRuntime, { method: "GET", url }).result();
       if (res.statusCode !== 200) {
         throw new Error(`HTTP GET failed (${res.statusCode}): ${url}`);
       }
-      return Buffer.from(res.body).toString("utf-8");
+      // Use TextDecoder instead of Buffer (Buffer is not available in WASM)
+      return new TextDecoder().decode(res.body);
     },
     consensusIdenticalAggregation<string>(),
   );
@@ -57,9 +59,9 @@ function httpGet(runtime: Runtime<Config>, url: string): string {
  * Make a POST request via CRE's node-mode execution.
  */
 function httpPost(runtime: Runtime<Config>, url: string, body: string): string {
-  const httpClient = new cre.capabilities.HTTPClient();
   const doPost = runtime.runInNodeMode(
     (nodeRuntime: NodeRuntime<Config>) => {
+      const httpClient = new cre.capabilities.HTTPClient();
       const res = httpClient
         .sendRequest(nodeRuntime, {
           method: "POST",
@@ -67,7 +69,7 @@ function httpPost(runtime: Runtime<Config>, url: string, body: string): string {
           body,
         })
         .result();
-      return Buffer.from(res.body).toString("utf-8");
+      return new TextDecoder().decode(res.body);
     },
     consensusIdenticalAggregation<string>(),
   );
@@ -137,7 +139,7 @@ function callGemini(runtime: Runtime<Config>, prompt: string): string {
     throw new Error(`Gemini API failed: status ${response.statusCode}`);
   }
 
-  const text = Buffer.from(response.body).toString("utf-8");
+  const text = new TextDecoder().decode(response.body);
   const data = JSON.parse(text) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
@@ -307,5 +309,3 @@ export async function main() {
   const runner = await Runner.newRunner<Config>({ configSchema });
   await runner.run(initWorkflow);
 }
-
-main();

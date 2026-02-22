@@ -3,7 +3,6 @@ import MyAgents from "./agents";
 import Earnings from "./earnings";
 import History from "./history";
 import DashboardNavbar from "./navbar";
-import Tasks from "./tasks";
 import { IconPlus } from "@tabler/icons-react";
 import {
   Tooltip,
@@ -17,7 +16,6 @@ function Dashboard() {
       <DashboardNavbar />
       <Earnings />
       <MyAgents />
-      <Tasks />
       <History />
       <Link
         href={"/chat"}
