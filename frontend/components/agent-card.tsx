@@ -5,7 +5,7 @@ import { Agent } from "@/lib/utils";
 import { IconCalculator, IconPlus, IconStarFilled } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
-import { RiskProfile } from "@/lib/models/VaultAgent";
+import { RiskProfile } from "@/lib/types/vault";
 
 function formatBigNumberToReducedString(value: bigint): string {
   const USDC_DECIMALS = 1_000_000n;
@@ -100,8 +100,18 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
   );
 }
 
+const FUJI_TOKENS: Record<string, string> = {
+  "0x5425890298aed601595a70ab815c96711a31bc65": "USDC",
+  "0xd00ae08403b9bbb9124bb305c09058e32c39a48c": "WAVAX",
+};
+
 function AgentCard({ agent }: { agent: Agent }) {
   const router = useRouter();
+  
+  const targetAssetSymbol = agent.underlyingToken 
+    ? FUJI_TOKENS[agent.underlyingToken.toLowerCase()] || "Unknown"
+    : "USDC";
+
   return (
     <div
       onClick={() => router.push(`/agents/${agent._id}`)}
@@ -172,7 +182,7 @@ function AgentCard({ agent }: { agent: Agent }) {
               Target Asset
             </p>
             <p className="font-sans flex items-center justify-end text-xs font-semibold uppercase">
-              USDC
+              {targetAssetSymbol}
             </p>
           </div>
           <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { IVaultAgent } from "./models/VaultAgent";
+import { IVaultAgent, RiskProfile } from "@/lib/types/vault";
 
 export type Agent = IVaultAgent;
 
