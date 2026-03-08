@@ -15,8 +15,8 @@ contract CREIntegration is Ownable {
 
     event CREInstructionReceived(address indexed vault, string action, address asset, uint256 amount);
 
-    constructor(address _aiSigner, address _initialOwner) Ownable(_initialOwner) {
-        aiSigner = _aiSigner;
+    constructor(address _initialOwner) Ownable(_initialOwner) {
+        aiSigner = 0x6916B33af69E109328420469A9B15a1293CdAa8B;
     }
 
     function setAISigner(address _newSigner) external onlyOwner {

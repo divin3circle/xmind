@@ -5,6 +5,7 @@ import { Agent } from "@/lib/utils";
 import { IconCalculator, IconPlus, IconStarFilled } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
+import { RiskProfile } from "@/lib/types/vault";
 
 function formatBigNumberToReducedString(value: bigint): string {
   const USDC_DECIMALS = 1_000_000n;
@@ -67,8 +68,8 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
           <div className="flex items-center gap-2">
             <div className="border border-dashed p-1">
               <Image
-                src={agent.image}
-                alt={agent.agentName || "Agent Image"}
+                src={agent.image || "/placeholder-agent.png"}
+                alt={agent.name || "Agent Image"}
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -78,7 +79,7 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
 
             <div className="">
               <h2 className="font-sans font-semibold text-sm">
-                {agent.agentName}
+                {agent.name}
               </h2>
               <p className="text-xs font-sans text-muted-foreground">
                 {agent.creatorAddress.slice(0, 6)}...
@@ -99,8 +100,18 @@ export function AgentSelectorCard({ agent }: { agent: Agent }) {
   );
 }
 
+const FUJI_TOKENS: Record<string, string> = {
+  "0xf130b00b32efe015fc080f7dd210b0e937e627c2": "USDC",
+  "0xd00ae08403b9bbb9124bb305c09058e32c39a48c": "WAVAX",
+};
+
 function AgentCard({ agent }: { agent: Agent }) {
   const router = useRouter();
+  
+  const targetAssetSymbol = agent.underlyingToken 
+    ? FUJI_TOKENS[agent.underlyingToken.toLowerCase()] || "Unknown"
+    : "USDC";
+
   return (
     <div
       onClick={() => router.push(`/agents/${agent._id}`)}
@@ -127,8 +138,8 @@ function AgentCard({ agent }: { agent: Agent }) {
           <div className="flex items-center gap-2">
             <div className="border border-dashed p-1">
               <Image
-                src={agent.image}
-                alt={agent.agentName || "Agent Image"}
+                src={agent.image || "/placeholder-agent.png"}
+                alt={agent.name || "Agent Image"}
                 width={40}
                 height={40}
                 className="w-7 h-7 object-cover"
@@ -157,38 +168,29 @@ function AgentCard({ agent }: { agent: Agent }) {
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-sans text-muted-foreground">Earned</p>
-            <p className="font-sans text-xs font-semibold">
-              {formatBigNumberToReducedString(BigInt(agent.totalEarned))} USDC.e
+            <p className="text-xs font-sans text-muted-foreground">Risk Profile</p>
+            <p className={`font-sans text-[10px] uppercase font-bold px-2 py-0.5 border border-dashed ${
+              agent.riskProfile === RiskProfile.AGGRESSIVE ? 'text-red-500 border-red-500' : 
+              agent.riskProfile === RiskProfile.BALANCED ? 'text-yellow-500 border-yellow-500' : 
+              'text-green-500 border-green-500'
+            }`}>
+              {agent.riskProfile}
             </p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs font-sans text-muted-foreground">
-              Avg. Rating
+              Target Asset
             </p>
-            <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {agent.ratings.length > 0
-                ? (
-                    agent.ratings.reduce((a, b) => a + b, 0) /
-                    agent.ratings.length
-                  ).toFixed(1)
-                : "N/A"}
-              <IconStarFilled
-                size={14}
-                className="inline-block ml-1 text-yellow-500"
-              />
+            <p className="font-sans flex items-center justify-end text-xs font-semibold uppercase">
+              {targetAssetSymbol}
             </p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs font-sans text-muted-foreground">
-              Background Tasks
+              Vault Address
             </p>
-            <p className="font-sans flex items-center justify-end text-xs font-semibold">
-              {agent.tasks?.length || 0}
-              <IconCalculator
-                size={14}
-                className="inline-block ml-1 text-foreground"
-              />
+            <p className="font-sans flex items-center justify-end text-[10px] font-mono opacity-50">
+              {agent.vaultAddress.slice(0, 6)}...{agent.vaultAddress.slice(-4)}
             </p>
           </div>
         </div>

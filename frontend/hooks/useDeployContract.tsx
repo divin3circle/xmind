@@ -1,119 +1,108 @@
-import { cronosTestnet } from "@/app/ThirdwebProvider";
-import config from "@/config/env";
-import { client } from "@/lib/client";
-import {
-  prepareContractCall,
-  getContract,
-  toWei,
-  waitForReceipt,
-} from "thirdweb";
-import { useSendTransaction } from "thirdweb/react";
 import { useState } from "react";
+import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
+import { useSendTransaction, useActiveAccount } from "thirdweb/react";
+import { client } from "@/lib/client";
+import { defineChain } from "thirdweb/chains";
+import config from "@/config/env";
+import { VaultFactoryABI } from "@/abi/VaultFactory";
+
+const fujiChain = defineChain(43113);
 
 interface DeployAgentParams {
   name: string;
   description: string;
   image: string;
   systemPrompt: string;
+  underlyingToken: string;
+  riskProfile: string;
   agentWalletAddress: string;
   onSuccess?: (transactionHash: string, contractAddress: string) => void;
   onError?: (error: string) => void;
 }
 
+const mapRiskProfileToUint = (riskStr: string) => {
+  if (riskStr === "conservative") return 0;
+  if (riskStr === "balanced") return 1;
+  if (riskStr === "aggressive") return 2;
+  return 1;
+};
+
 export const useDeployContract = () => {
-  const {
-    mutate: sendTx,
-    data: transactionResult,
-    isPending,
-  } = useSendTransaction();
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deployedAgentAddress, setDeployedAgentAddress] = useState<
-    string | null
-  >(null);
+  const [deployedAgentAddress, setDeployedAgentAddress] = useState<string | null>(null);
+
+  const { mutateAsync: sendTx } = useSendTransaction();
+  const activeAccount = useActiveAccount();
 
   const deployAgent = async (params: DeployAgentParams) => {
     try {
+      if (!activeAccount) throw new Error("Wallet not connected");
+
       setIsDeploying(true);
       setError(null);
-      const contract = getContract({
-        address: config.NEXT_PUBLIC_AGENT_FACTORY_ADDRESS,
-        chain: cronosTestnet,
+      
+      const factoryAddress = config.NEXT_PUBLIC_VAULT_FACTORY_ADDRESS;
+      if (!factoryAddress) {
+        throw new Error("Vault Factory address not configured in .env (NEXT_PUBLIC_VAULT_FACTORY_ADDRESS). Please deploy the factory first.");
+      }
+
+      const factoryContract = getContract({
         client,
+        chain: fujiChain,
+        address: factoryAddress,
+        abi: VaultFactoryABI,
       });
 
-      // Prepare the transaction
-      const transaction = prepareContractCall({
-        contract,
-        method:
-          "function deployAgent(string _name, string _description, string _image, string _systemPrompt, address _agentWalletAddress) payable returns (address)",
+      console.log("Preparing deployment transaction...");
+      const tx = prepareContractCall({
+        contract: factoryContract,
+        method: "deployVault",
         params: [
+          params.underlyingToken,
           params.name,
-          params.description,
-          params.image,
-          params.systemPrompt,
-          params.agentWalletAddress,
-        ],
-        value: toWei(
-          config.NEXT_PUBLIC_AGENT_FACTORY_DEPLOYMENT_FEE_CRO.toString(),
-        ),
+          params.name, // simply using the name as the symbol token
+          mapRiskProfileToUint(params.riskProfile)
+        ]
       });
 
-      // Send the transaction
-      sendTx(transaction, {
-        onSuccess: async (result) => {
-          console.log("Agent deployed successfully:", result);
-          try {
-            // Wait for transaction receipt to get the deployed contract address
-            const receipt = await waitForReceipt({
-              client,
-              chain: cronosTestnet,
-              transactionHash: result.transactionHash,
-            });
-
-            console.log("Transaction receipt:", receipt);
-
-            // Extract the deployed contract address from logs
-            // The factory should emit an event with the deployed address
-            // Typically it's in the first log or you can parse specific events
-            let deployedAddress = "";
-
-            if (receipt.logs && receipt.logs.length > 0) {
-              // The deployed contract address is typically in the first log's address field
-              // or you might need to decode the event data depending on your factory implementation
-              const agentDeployedLog = receipt.logs.find(
-                (log) => log.topics.length > 0, // Find the AgentDeployed event
-              );
-
-              if (agentDeployedLog) {
-                // If the address is emitted in the event, it would be in topics or data
-                // For now, we'll check the contractAddress from the first log
-                deployedAddress = receipt.logs[0].address || "";
-              }
-            }
-
-            console.log("Deployed contract address:", deployedAddress);
-            setDeployedAgentAddress(deployedAddress);
-            setIsDeploying(false);
-            params.onSuccess?.(result.transactionHash, deployedAddress);
-          } catch (err) {
-            console.error("Error getting receipt:", err);
-            // Still call success with transaction hash even if we couldn't get the address
-            setIsDeploying(false);
-            params.onSuccess?.(result.transactionHash, "");
-          }
-        },
-        onError: (err) => {
-          console.error("Deployment failed:", err);
-          const errorMessage = err.message || "Deployment failed";
-          setError(errorMessage);
-          setIsDeploying(false);
-          params.onError?.(errorMessage);
-        },
+      console.log("Sending transaction...");
+      const receiptData = await sendTx(tx);
+      
+      console.log("Waiting for receipt...", receiptData.transactionHash);
+      const receipt = await waitForReceipt({
+        client,
+        chain: fujiChain,
+        transactionHash: receiptData.transactionHash,
       });
-    } catch (err) {
-      console.error("Error preparing deployment:", err);
-      const errorMessage = "Failed to prepare deployment";
+
+      // Extract the AgentVault address from the VaultCreated event logs
+      // VaultCreated(address indexed vault, address indexed owner, address asset)
+      // keccak256("VaultCreated(address,address,address)")
+      const VAULT_CREATED_TOPIC = "0x897c133dfbfe1f6239e98b4ffd7e4f6c86a62350a131a7a37790419f58af02f9";
+      
+      let vaultAddress = "";
+      for (const log of receipt.logs) {
+        if (log.topics && log.topics[0]?.toLowerCase() === VAULT_CREATED_TOPIC) {
+          // topics[1] = indexed vault address (left-padded to 32 bytes)
+          vaultAddress = "0x" + log.topics[1]?.slice(-40);
+          break;
+        }
+      }
+
+      if (!vaultAddress) {
+        console.warn("Could not cleanly parse vault address from logs, falling back to transaction hash");
+        vaultAddress = receiptData.transactionHash; 
+      }
+
+      console.log("Deployed Vault address:", vaultAddress);
+      setDeployedAgentAddress(vaultAddress);
+      setIsDeploying(false);
+      params.onSuccess?.(receiptData.transactionHash, vaultAddress);
+
+    } catch (err: any) {
+      console.error("Error deploying vault:", err);
+      const errorMessage = err.message || "Failed to deploy Vault via Factory";
       setError(errorMessage);
       setIsDeploying(false);
       params.onError?.(errorMessage);
@@ -122,9 +111,8 @@ export const useDeployContract = () => {
 
   return {
     deployAgent,
-    isDeploying: isDeploying || isPending,
+    isDeploying,
     error,
-    transactionResult,
     deployedAgentAddress,
   };
 };

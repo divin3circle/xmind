@@ -14,19 +14,19 @@ function Currency() {
         <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
         <div className="">
           <h1 className="text-2xl md:text-3xl font-bold font-sans mt-8 mb-4 text-left">
-            Native Currency of the AI Ecosystem
+            Native Currency of the Ecosystem
           </h1>
           <p className="text-muted-foreground text-xs font-sans max-w-md leading-relaxed mt-4">
-            All transactions within the app are powered by the USDC.e(devUSDC.e
-            on Cronos Testnet) native to the Cronos Blockchain. This stablecoin
-            coupled with the x402 protocol ensures secure, fast, and low-cost
-            payments for agent workflows.
+            All transactions within XMind Capital are powered by USDC native 
+            to the Avalanche Blockchain. This choice ensures institutional-grade 
+            liquidity and stable value tracking for all AI-managed investment 
+            vaults.
           </p>
           <Button
             className="mt-10 w-full md:w-1/2 border-green-500 border-dashed font-sans"
             variant="outline"
           >
-            Get USDC.e
+            Get USDC
           </Button>
         </div>
         <Image

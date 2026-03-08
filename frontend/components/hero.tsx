@@ -15,16 +15,16 @@ function Hero() {
       <IconPlus className="absolute -bottom-3 -left-3" color="gray" />
       <div className="px-4">
         <Button className="mb-4 mt-4 md:mt-0 opacity-50 font-sans text-foreground px-4 py-2 transition bg-transparent border border-foreground/50">
-          Cronos EVM
+          Avalanche
         </Button>
         <h1 className="text-2xl md:text-5xl font-bold font-sans mt-8 mb-4 text-left">
-          Deploy, paygate, and run Cronos AI agents
+          Deploy & invest in AI-managed tokenized vaults
         </h1>
         <p className="text-xs md:text-sm font-sans leading-relaxed mb-6 text-left md:max-w-md mt-4">
-          Launch MCP agents on Cronos EVM with x402 payments baked in. Browse
-          templates, deploy on-chain wallets and contracts, meter paid calls,
-          and monitor earnings from one dashboard. No infra wrangling—just ship
-          agents that can charge and act.
+          Launch autonomous ERC-4626 portfolios on Avalanche with verifiable AI 
+          execution. Deploy on-chain vault managers, enforce risk guardrails, 
+          and monitor your yield across chains from one professional dashboard. 
+          No custody risks—just smart, trustless capital management.
         </p>
         <div className="flex flex-col md:flex-row justify-center md:justify-start gap-4 mt-14">
           <Button

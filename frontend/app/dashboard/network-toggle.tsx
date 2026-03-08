@@ -8,22 +8,37 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { IconChevronsDown, IconSquareCheckFilled } from "@tabler/icons-react";
+import { useSwitchActiveWalletChain, useActiveWalletChain } from "thirdweb/react";
+import { avalanche, avalancheFuji } from "thirdweb/chains";
+import { toast } from "sonner";
 
 interface Network {
   name: string;
-  chainId: number;
+  chain: typeof avalanche | typeof avalancheFuji;
 }
 
 const networks: Network[] = [
-  { name: "Cronos Testnet", chainId: 338 },
-  { name: "Cronos Mainnet", chainId: 25 },
+  { name: "Avalanche Mainnet", chain: avalanche },
+  { name: "Avalanche Fuji", chain: avalancheFuji },
 ];
 
 function NetworkToggle() {
-  const [selectedNetwork, setSelectedNetwork] = React.useState<Network>({
-    name: "Cronos Mainnet",
-    chainId: 25,
-  });
+  const switchChain = useSwitchActiveWalletChain();
+  const activeChain = useActiveWalletChain();
+
+  const handleNetworkSwitch = async (network: Network) => {
+    try {
+      await switchChain(network.chain);
+      toast.success(`Switched to ${network.name}`);
+    } catch (error) {
+      console.error("Failed to switch network:", error);
+      toast.error("Failed to switch network. Please try manually in your wallet.");
+    }
+  };
+
+  const selectedNetwork = 
+    networks.find((n) => n.chain.id === activeChain?.id) || networks[1]; // Default to Fuji if unknown
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -43,12 +58,12 @@ function NetworkToggle() {
         <div className="mt-1 flex flex-col gap-2">
           {networks.map((network) => (
             <div
-              onClick={() => setSelectedNetwork(network)}
-              key={network.chainId}
+              onClick={() => handleNetworkSwitch(network)}
+              key={network.chain.id}
               className="font-sans text-sm bg-transparent text-foreground/50 hover:text-foreground p-2 hover:border-green-500 border border-dashed flex items-center justify-between cursor-pointer"
             >
               {network.name}
-              {selectedNetwork.chainId === network.chainId && (
+              {activeChain?.id === network.chain.id && (
                 <IconSquareCheckFilled size={16} color="green" />
               )}
             </div>
