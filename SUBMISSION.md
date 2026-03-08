@@ -1,52 +1,32 @@
-# xMind — Hackathon Submission
+# XMind Capital AI Terminal — Hackathon Submission
 
-## Inspiration
+## 💡 Inspiration
+Building on-chain AI traders is terrifying. Smart contracts are blind to shifting market sentiment, and AI agents famously hallucinate and disrespect capital constraints. We wanted to build a secure bridge — holding AI logic back with hard cryptographic guarantees before it ever touches user capital.
 
-AI agents are powerful, but creators still struggle to monetize usage in a way that feels native to agents and fast enough for micro-interactions. Traditional payment rails aren’t built for pay-per-action experiences, and centralized services obscure how funds flow. We wanted a transparent, programmable way for agents to charge for services on the fly—so users pay only when value is delivered—using Web3-native primitives and the x402 standard.
+## 🚀 What it does
+XMind Capital AI Terminal is an intelligent portfolio manager where AI autonomously manages ERC-4626 standard DeFi vaults. 
 
-## What it does
+Instead of risking the entire vault, the system enforces strict liquidity guardrails on-chain. The AI runs securely inside a **Chainlink Custom Runtime Environment (CRE)** workflow, pulls live market data via a **Model Context Protocol (MCP)** server, and makes trading decisions. 
 
-xMind is a decentralized marketplace where creators launch AI agents as on-chain entities and earn from user interactions via x402 micropayments.
-- Users chat with agents in a natural UI; when an agent needs a paid capability, it triggers an HTTP 402 Payment Required flow.
-- Payments settle via EIP-3009 (gasless authorization) using USDC.e on the blockchain; earnings accrue on the agent and are fully transparent.
-- Agents can perform DeFi, wallet, bridging, and other Web3 actions through our MCP server (30+ tools).
-- A dashboard shows agent performance: tasks, earnings, histories, and live balances across agents.
+Crucially, it does not execute these trades directly. Instead, the MCP server compiles the AI's intent into a deterministic, **EIP-191 signed instruction**. This signed instruction is then cryptographically verified by our smart contracts on the **Avalanche Fuji** testnet before altering the vault's assets.
 
-## How we built it
-- Gemini 2.5 Flash model acts as the foundation of the agenst on xMind
-- Frontend: Next.js (App Router), TypeScript, Tailwind, shadcn/ui, Thirdweb SDK for wallet connection and chain reads.
-- Smart Contracts: Solidity (AgentFactory + Agent) on Cronos EVM with OpenZeppelin patterns (Ownable, ReentrancyGuard). Hardhat for deploy/test.
-- Payments: x402 facilitator integration using EIP-3009 TransferWithAuthorization and EIP-712 domain from USDC.e; automatic header generation and settlement verification.
-- Backend/API: Next.js routes with MongoDB/Mongoose for agents, chats, and analytics.
-- MCP Server: Cloudflare Workers + Model Context Protocol, integrating Crypto.com Developer Platform SDK and LiFi SDK for DeFi, wallet, and cross-chain tooling.
+## 🛠️ How we built it
+- **AI & Automation Layer**: Chainlink CRE workflow simulator orchestrating Gemini 1.5 Flash.
+- **Tools Layer (MCP Server)**: A custom Cloudflare Worker acting as the AI's "Bloomberg Terminal," fetching real-time Avalanche Fuji context (Vault State, Market Prices, Risk Metrics).
+- **Blockchain Layer (Avalanche)**: Solidity smart contracts (`AgentVault`, `CREIntegration`, `RiskValidator`, `VaultFactory`) deployed to Avalanche Fuji testnet. We also deployed a `MockDeFiRouter` and mock tokens (`mWETH`, `mWAVAX`) to safely simulate TraderJoe/Stargate interactions.
+- **Frontend Dashboard**: A robust Next.js App Router interface to track vault performance, deploy new agents, and monitor the AI's semantic reasoning alongside its cryptographic audit logs.
 
-## Challenges we ran into
+## ⚠️ Challenges we ran into
+- **Chainlink CRE Execution Constraints**: The CRE execution simulator has a strict 5-call HTTP limit on fetch nodes. We initially blew past this gathering context. We resolved it by aggregating Vault State, Market Conditions, and Risk Analysis into a single `get_full_context` MCP endpoint, freeing up HTTP budget for the final `compile_vault_instruction` signing step.
+- **Ethers v6 Serialization**: Ethers v6 strictly returns `BigInt` for contract calls. This caused JSON serialization crashes when passing vault data to Gemini in the CRE workflow. We built a sanitization layer in the MCP tools to ensure safe numeric casting before formatting prompts.
+- **EIP-191 Off-chain vs On-chain**: Debugging deterministic EVM payload signing in TypeScript against strict `keccak256` hashing on-chain (`CREIntegration.sol`) required precise ABI alignment.
 
-- Database connectivity: Mongoose buffering/server selection timeouts due to missing connection calls, SRV/DNS issues, and URI encoding pitfalls (special characters in passwords).
-- x402 correctness: Normalizing network values, preserving facilitator payment schemes, resolving payTo/address formatting, and ensuring EIP-712 domain/version matched USDC.e for valid EIP-3009 signatures.
-- Tooling integration: Aligning agent prompts and backend MCP tools to reuse payment headers and minimize user friction.
-- Build/runtime ergonomics: Path alias resolution for scripts and seed data across environments.
+## 🏆 Accomplishments that we're proud of
+- Successfully architecting a closed-loop **"Think -> Sign -> Verify -> Execute"** pipeline. The AI doesn't just suggest trades; it generates mathematically verifiable payloads.
+- Building a stateless `RiskValidator` library that structurally prevents the AI from investing more than 60% of a vault's assets, enforcing a hard 40% liquidity buffer for user withdrawals regardless of the AI's aggression.
+- Integrating MCP seamlessly with Chainlink CRE workflows, proving that decentralized agents can be augmented with real-time tool use.
 
-## Accomplishments that we're proud of
-
-- End-to-end paygated agent interactions with transparent earnings on the blockchain
-- A robust MCP server exposing 30+ Web3 tools (DeFi, wallet, bridge, x402 helpers).
-- Clean agent UX: creation, deployment, live details, earnings aggregation across agents.
-- A simplified, reliable x402 header generation flow with automatic requirement fetching and signature validation.
-- Clear product narrative and onboarding via the README and app UI.
-
-## What we learned
-
-- Practical nuances of EIP-3009/EIP-712 signatures and domain separation in production token contracts.
-- Designing agentic payment flows: when to request payment, how to minimize retries, and how to reuse authorization safely.
-- Operational realities of MongoDB in cloud environments (SRV/DNS, IP allowlisting, connection reuse).
-- How MCP can make agents truly capable by abstracting Web3 functionality behind safe, composable tools.
-
-## What's next for xMind
-
-- Marketplace discovery and agent reputation to help users find trustworthy, high-value agents.
-- Agent-to-agent communication and multi-agent orchestration.
-- Google's Gemini Multi-model support with pluggable system prompts and capabilities.
-- Enhanced analytics: deeper earnings insights, cohort analysis, and performance tuning.
-- Security hardening: at-rest encryption for agent keys, rate limiting, and granular permissions.
-- Mainnet deployment, mobile client, DAO governance, staking/rewards, and cross-chain agent deployment.
+## 🔮 What's next for XMind Capital
+- **Mainnet Deployment**: Migrating from the `MockDeFiRouter` to live Trader Joe and Stargate contracts on Avalanche Mainnet.
+- **Multi-Agent Orchestration**: Introducing specialized risk-agents that counter-sign trades proposed by trader-agents.
+- **Full Chainlink DON Deployment**: Moving from the simulated `cre workflow` environment to a live Decentralized Oracle Network.
