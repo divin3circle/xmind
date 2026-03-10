@@ -11,21 +11,23 @@ import {
 } from "@chainlink/cre-sdk";
 import { z } from "zod";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIG SCHEMA
-// ─────────────────────────────────────────────────────────────────────────────
+const GEMINI_API_KEY = "GEMINI_API_KEY"
+const AI_SIGNER_PRIVATE_KEY = "AI_SIGNER_PRIVATE_KEY"
+
 const configSchema = z.object({
-  schedule: z.string(),
-  vaultAddress: z.string(),
   creIntegrationAddress: z.string(),
   chainSelectorName: z.string(),
   backendUrl: z.string(),
   mcpUrl: z.string(),
-  geminiApiKey: z.string(),
-  aiSignerKey: z.string(),
 });
 
 type Config = z.infer<typeof configSchema>;
+
+function uint8ArrayToHex(arr: Uint8Array): string {
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 type TriggerReason = "cron" | "deposit" | "withdrawal" | "emergency";
 
@@ -93,8 +95,8 @@ function httpPost(runtime: Runtime<Config>, url: string, body: string): string {
 // BACKEND + MCP HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function fetchAgentConfig(runtime: Runtime<Config>) {
-  const url = `${runtime.config.backendUrl}/api/cre/agent-config?vaultAddress=${runtime.config.vaultAddress}`;
+function fetchAgentConfig(runtime: Runtime<Config>, vaultAddress: string) {
+  const url = `${runtime.config.backendUrl}/api/cre/agent-config?vaultAddress=${vaultAddress}`;
   const text = httpGet(runtime, url);
   return JSON.parse(text) as {
     systemPrompt: string;
@@ -166,16 +168,15 @@ function callGemini(runtime: Runtime<Config>, prompt: string, geminiKey: string)
 // ─────────────────────────────────────────────────────────────────────────────
 // CORE ORCHESTRATOR — Single decision engine for all triggers
 // ─────────────────────────────────────────────────────────────────────────────
-function orchestrate(runtime: Runtime<Config>, reason: TriggerReason, geminiKey: string): string {
-  const { config } = runtime;
-  runtime.log(`[XMind Orchestrator] Triggered by: ${reason}`);
+function orchestrate(runtime: Runtime<Config>, vaultAddress: string, reason: TriggerReason, geminiKey: string): string {
+  runtime.log(`[XMind Orchestrator] Triggered by: ${reason} for vault: ${vaultAddress}`);
 
   // 1. Fetch agent config from backend
-  const agentConfig = fetchAgentConfig(runtime);
+  const agentConfig = fetchAgentConfig(runtime, vaultAddress);
   if (!agentConfig.tradingEnabled) {
     runtime.log("Trading is disabled. Skipping.");
     logAction(runtime, {
-      vaultAddress: config.vaultAddress,
+      vaultAddress: vaultAddress,
       action: reason,
       summary: "Skipped — trading disabled",
       status: "skipped",
@@ -185,11 +186,12 @@ function orchestrate(runtime: Runtime<Config>, reason: TriggerReason, geminiKey:
 
   // 2. Get full context in ONE MCP call  (HTTP call 1)
   //    Merges: vault state + market snapshot + risk analysis
-  const context = callMcpTool(runtime, "get_full_context", { vaultAddress: config.vaultAddress }) as any;
+  const context = callMcpTool(runtime, "get_full_context", { vaultAddress: vaultAddress }) as any;
   const { vaultState, market, risk } = context;
   runtime.log(`Vault: ${JSON.stringify(vaultState).substring(0, 150)}`);
   runtime.log(`Market: ${JSON.stringify(market).substring(0, 150)}`);
   runtime.log(`Risk: ${JSON.stringify(risk).substring(0, 150)}`);
+  const aiSignerKey = runtime.getSecret({ id: AI_SIGNER_PRIVATE_KEY }).result()
 
   // 3. Ask Gemini for a strategic decision  (HTTP call 2)
   const prompt = buildAIPrompt(reason, agentConfig, vaultState, market, risk);
@@ -207,9 +209,9 @@ function orchestrate(runtime: Runtime<Config>, reason: TriggerReason, geminiKey:
 
         // (HTTP call 3) — MCP compiles, signs, and returns the ready-to-submit payload
         executionResult = callMcpTool(runtime, "compile_vault_instruction", {
-          vaultAddress: config.vaultAddress,
+          vaultAddress: vaultAddress,
           targetAllocation: parsed.targetAllocation,
-          privateKey: config.aiSignerKey
+          privateKey: aiSignerKey.value
         });
 
         runtime.log(`[Orchestrator] Instruction status: ${executionResult?.status}`);
@@ -228,7 +230,7 @@ function orchestrate(runtime: Runtime<Config>, reason: TriggerReason, geminiKey:
     : "success";
 
   logAction(runtime, {
-    vaultAddress: config.vaultAddress,
+    vaultAddress: vaultAddress,
     action: reason,
     summary: executionResult?.status === "ready_for_execution"
       ? `${aiDecision}\n\n--- SIGNED INSTRUCTION ---\n${JSON.stringify(executionResult.instruction, null, 2)}`
@@ -304,31 +306,57 @@ function buildAIPrompt(
 // TRIGGER CALLBACKS
 // ─────────────────────────────────────────────────────────────────────────────
 // Trigger callbacks are now factory functions that close over the geminiKey
-function makeCronTrigger(geminiKey: string) {
-  return (runtime: Runtime<Config>, _payload: CronPayload): string => {
-    runtime.log("Cron trigger fired.");
-    return orchestrate(runtime, "cron", geminiKey);
+function makeCycleTrigger() {
+  return (runtime: Runtime<Config>, payload: any): string => {
+    const geminiKey = runtime.getSecret({ id: GEMINI_API_KEY }).result()
+    runtime.log("Cycle HTTP trigger fired.");
+
+    let vaultAddress = "0x0000000000000000000000000000000000000000";
+    try {
+      const text = new TextDecoder().decode(payload.input);
+      const data = JSON.parse(text);
+      vaultAddress = data.vaultAddress || vaultAddress;
+    } catch (err) {
+      runtime.log(`[CycleTrigger] Error parsing payload: ${err}`);
+    }
+
+    return orchestrate(runtime, vaultAddress, "cron", geminiKey.value);
   };
 }
 
-function makeDepositTrigger(geminiKey: string) {
-  return (runtime: Runtime<Config>, _payload: EVMLog): string => {
+function makeDepositTrigger() {
+  return (runtime: Runtime<Config>, payload: EVMLog): string => {
+    const geminiKey = runtime.getSecret({ id: GEMINI_API_KEY }).result()
     runtime.log("Deposit event detected.");
-    return orchestrate(runtime, "deposit", geminiKey);
+    const vaultAddress = `0x${uint8ArrayToHex(payload.address)}`;
+    return orchestrate(runtime, vaultAddress, "deposit", geminiKey.value);
   };
 }
 
-function makeWithdrawTrigger(geminiKey: string) {
-  return (runtime: Runtime<Config>, _payload: EVMLog): string => {
+function makeWithdrawTrigger() {
+  return (runtime: Runtime<Config>, payload: EVMLog): string => {
+    const geminiKey = runtime.getSecret({ id: GEMINI_API_KEY }).result()
     runtime.log("Withdrawal event detected.");
-    return orchestrate(runtime, "withdrawal", geminiKey);
+    const vaultAddress = `0x${uint8ArrayToHex(payload.address)}`;
+    return orchestrate(runtime, vaultAddress, "withdrawal", geminiKey.value);
   };
 }
 
-function makeEmergencyTrigger(geminiKey: string) {
-  return (runtime: Runtime<Config>): string => {
+function makeEmergencyTrigger() {
+  return (runtime: Runtime<Config>, payload: any): string => {
+    const geminiKey = runtime.getSecret({ id: GEMINI_API_KEY }).result()
     runtime.log("Emergency HTTP trigger received.");
-    return orchestrate(runtime, "emergency", geminiKey);
+    
+    let vaultAddress = "0x0000000000000000000000000000000000000000";
+    try {
+      const text = new TextDecoder().decode(payload.input);
+      const data = JSON.parse(text);
+      vaultAddress = data.vaultAddress || vaultAddress;
+    } catch (err) {
+      runtime.log(`[EmergencyTrigger] Error parsing payload: ${err}`);
+    }
+
+    return orchestrate(runtime, vaultAddress, "emergency", geminiKey.value);
   };
 }
 
@@ -336,10 +364,7 @@ function makeEmergencyTrigger(geminiKey: string) {
 // WORKFLOW INIT — 4 triggers, 1 orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
 const initWorkflow = (config: Config) => {
-  // Read the Gemini API key from config (avoids DON secrets system for simulation)
-  const geminiKey = config.geminiApiKey;
 
-  const cronCapability = new cre.capabilities.CronCapability();
   const httpCapability = new cre.capabilities.HTTPCapability();
 
   const network = getNetwork({
@@ -353,11 +378,13 @@ const initWorkflow = (config: Config) => {
   }
 
   const evmClient = new cre.capabilities.EVMClient(network.chainSelector.selector);
-  const vaultAddressBase64 = hexToBase64(config.vaultAddress);
+  
+  // Use a placeholder if not in config, as simulation will provide it via payload
+  const vaultAddressBase64 = hexToBase64("0x0000000000000000000000000000000000000000");
 
   return [
-    // 0 — Cron: Scheduled rebalance
-    cre.handler(cronCapability.trigger({ schedule: config.schedule }), makeCronTrigger(geminiKey)),
+    // 0 — HTTP: Periodic Rebalance Cycle (Replaced Cron)
+    cre.handler(httpCapability.trigger({}), makeCycleTrigger()),
 
     // 1 — EVM Log: Deposit event
     cre.handler(
@@ -365,7 +392,7 @@ const initWorkflow = (config: Config) => {
         addresses: [vaultAddressBase64],
         topics: [{ values: [DEPOSIT_TOPIC] }],
       }),
-      makeDepositTrigger(geminiKey)
+      makeDepositTrigger()
     ),
 
     // 2 — EVM Log: Withdrawal event
@@ -374,11 +401,11 @@ const initWorkflow = (config: Config) => {
         addresses: [vaultAddressBase64],
         topics: [{ values: [WITHDRAW_TOPIC] }],
       }),
-      makeWithdrawTrigger(geminiKey)
+      makeWithdrawTrigger()
     ),
 
     // 3 — HTTP: Emergency
-    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger(geminiKey)),
+    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger()),
   ];
 };
 

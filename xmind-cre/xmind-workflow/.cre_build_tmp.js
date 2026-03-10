@@ -27654,16 +27654,17 @@ function date4(params) {
   return _coercedDate(ZodDate2, params);
 }
 config(en_default2());
+var GEMINI_API_KEY = "GEMINI_API_KEY";
+var AI_SIGNER_PRIVATE_KEY = "AI_SIGNER_PRIVATE_KEY";
 var configSchema = exports_external2.object({
-  schedule: exports_external2.string(),
-  vaultAddress: exports_external2.string(),
   creIntegrationAddress: exports_external2.string(),
   chainSelectorName: exports_external2.string(),
   backendUrl: exports_external2.string(),
-  mcpUrl: exports_external2.string(),
-  geminiApiKey: exports_external2.string(),
-  aiSignerKey: exports_external2.string()
+  mcpUrl: exports_external2.string()
 });
+function uint8ArrayToHex2(arr) {
+  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 var DEPOSIT_TOPIC = "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7";
 var WITHDRAW_TOPIC = "0xfbde797d201c681b91056529119e0b02407c7bb96a4a2c75c01fc9667232c8db";
 function httpGet(runtime2, url2) {
@@ -27699,8 +27700,8 @@ function httpPost(runtime2, url2, body) {
   }, consensusIdenticalAggregation());
   return doPost().result();
 }
-function fetchAgentConfig(runtime2) {
-  const url2 = `${runtime2.config.backendUrl}/api/cre/agent-config?vaultAddress=${runtime2.config.vaultAddress}`;
+function fetchAgentConfig(runtime2, vaultAddress) {
+  const url2 = `${runtime2.config.backendUrl}/api/cre/agent-config?vaultAddress=${vaultAddress}`;
   const text = httpGet(runtime2, url2);
   return JSON.parse(text);
 }
@@ -27741,25 +27742,25 @@ function callGemini(runtime2, prompt, geminiKey) {
   const data = JSON.parse(text);
   return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "no_action_needed";
 }
-function orchestrate(runtime2, reason, geminiKey) {
-  const { config: config2 } = runtime2;
-  runtime2.log(`[XMind Orchestrator] Triggered by: ${reason}`);
-  const agentConfig = fetchAgentConfig(runtime2);
+function orchestrate(runtime2, vaultAddress, reason, geminiKey) {
+  runtime2.log(`[XMind Orchestrator] Triggered by: ${reason} for vault: ${vaultAddress}`);
+  const agentConfig = fetchAgentConfig(runtime2, vaultAddress);
   if (!agentConfig.tradingEnabled) {
     runtime2.log("Trading is disabled. Skipping.");
     logAction(runtime2, {
-      vaultAddress: config2.vaultAddress,
+      vaultAddress,
       action: reason,
       summary: "Skipped — trading disabled",
       status: "skipped"
     });
     return "Skipped — trading disabled";
   }
-  const context = callMcpTool(runtime2, "get_full_context", { vaultAddress: config2.vaultAddress });
+  const context = callMcpTool(runtime2, "get_full_context", { vaultAddress });
   const { vaultState, market, risk } = context;
   runtime2.log(`Vault: ${JSON.stringify(vaultState).substring(0, 150)}`);
   runtime2.log(`Market: ${JSON.stringify(market).substring(0, 150)}`);
   runtime2.log(`Risk: ${JSON.stringify(risk).substring(0, 150)}`);
+  const aiSignerKey = runtime2.getSecret({ id: AI_SIGNER_PRIVATE_KEY }).result();
   const prompt = buildAIPrompt(reason, agentConfig, vaultState, market, risk);
   const aiDecision = callGemini(runtime2, prompt, geminiKey);
   runtime2.log(`AI Decision: ${aiDecision.substring(0, 300)}`);
@@ -27771,9 +27772,9 @@ function orchestrate(runtime2, reason, geminiKey) {
       if (parsed.targetAllocation) {
         runtime2.log("[Orchestrator] Trade intent detected. Compiling signed instruction...");
         executionResult = callMcpTool(runtime2, "compile_vault_instruction", {
-          vaultAddress: config2.vaultAddress,
+          vaultAddress,
           targetAllocation: parsed.targetAllocation,
-          privateKey: config2.aiSignerKey
+          privateKey: aiSignerKey.value
         });
         runtime2.log(`[Orchestrator] Instruction status: ${executionResult?.status}`);
         if (executionResult?.instruction) {
@@ -27786,7 +27787,7 @@ function orchestrate(runtime2, reason, geminiKey) {
   }
   const finalStatus = executionResult?.status === "ready_for_execution" ? "success" : "success";
   logAction(runtime2, {
-    vaultAddress: config2.vaultAddress,
+    vaultAddress,
     action: reason,
     summary: executionResult?.status === "ready_for_execution" ? `${aiDecision}
 
@@ -27843,33 +27844,53 @@ function buildAIPrompt(reason, agentConfig, vaultState, market, risk) {
   ].join(`
 `);
 }
-function makeCronTrigger(geminiKey) {
-  return (runtime2, _payload) => {
-    runtime2.log("Cron trigger fired.");
-    return orchestrate(runtime2, "cron", geminiKey);
+function makeCycleTrigger() {
+  return (runtime2, payload) => {
+    const geminiKey = runtime2.getSecret({ id: GEMINI_API_KEY }).result();
+    runtime2.log("Cycle HTTP trigger fired.");
+    let vaultAddress = "0x0000000000000000000000000000000000000000";
+    try {
+      const text = new TextDecoder().decode(payload.input);
+      const data = JSON.parse(text);
+      vaultAddress = data.vaultAddress || vaultAddress;
+    } catch (err) {
+      runtime2.log(`[CycleTrigger] Error parsing payload: ${err}`);
+    }
+    return orchestrate(runtime2, vaultAddress, "cron", geminiKey.value);
   };
 }
-function makeDepositTrigger(geminiKey) {
-  return (runtime2, _payload) => {
+function makeDepositTrigger() {
+  return (runtime2, payload) => {
+    const geminiKey = runtime2.getSecret({ id: GEMINI_API_KEY }).result();
     runtime2.log("Deposit event detected.");
-    return orchestrate(runtime2, "deposit", geminiKey);
+    const vaultAddress = `0x${uint8ArrayToHex2(payload.address)}`;
+    return orchestrate(runtime2, vaultAddress, "deposit", geminiKey.value);
   };
 }
-function makeWithdrawTrigger(geminiKey) {
-  return (runtime2, _payload) => {
+function makeWithdrawTrigger() {
+  return (runtime2, payload) => {
+    const geminiKey = runtime2.getSecret({ id: GEMINI_API_KEY }).result();
     runtime2.log("Withdrawal event detected.");
-    return orchestrate(runtime2, "withdrawal", geminiKey);
+    const vaultAddress = `0x${uint8ArrayToHex2(payload.address)}`;
+    return orchestrate(runtime2, vaultAddress, "withdrawal", geminiKey.value);
   };
 }
-function makeEmergencyTrigger(geminiKey) {
-  return (runtime2) => {
+function makeEmergencyTrigger() {
+  return (runtime2, payload) => {
+    const geminiKey = runtime2.getSecret({ id: GEMINI_API_KEY }).result();
     runtime2.log("Emergency HTTP trigger received.");
-    return orchestrate(runtime2, "emergency", geminiKey);
+    let vaultAddress = "0x0000000000000000000000000000000000000000";
+    try {
+      const text = new TextDecoder().decode(payload.input);
+      const data = JSON.parse(text);
+      vaultAddress = data.vaultAddress || vaultAddress;
+    } catch (err) {
+      runtime2.log(`[EmergencyTrigger] Error parsing payload: ${err}`);
+    }
+    return orchestrate(runtime2, vaultAddress, "emergency", geminiKey.value);
   };
 }
 var initWorkflow = (config2) => {
-  const geminiKey = config2.geminiApiKey;
-  const cronCapability = new cre.capabilities.CronCapability;
   const httpCapability = new cre.capabilities.HTTPCapability;
   const network248 = getNetwork({
     chainFamily: "evm",
@@ -27880,18 +27901,18 @@ var initWorkflow = (config2) => {
     throw new Error(`Network not found: ${config2.chainSelectorName}`);
   }
   const evmClient = new cre.capabilities.EVMClient(network248.chainSelector.selector);
-  const vaultAddressBase64 = hexToBase64(config2.vaultAddress);
+  const vaultAddressBase64 = hexToBase64("0x0000000000000000000000000000000000000000");
   return [
-    cre.handler(cronCapability.trigger({ schedule: config2.schedule }), makeCronTrigger(geminiKey)),
+    cre.handler(httpCapability.trigger({}), makeCycleTrigger()),
     cre.handler(evmClient.logTrigger({
       addresses: [vaultAddressBase64],
       topics: [{ values: [DEPOSIT_TOPIC] }]
-    }), makeDepositTrigger(geminiKey)),
+    }), makeDepositTrigger()),
     cre.handler(evmClient.logTrigger({
       addresses: [vaultAddressBase64],
       topics: [{ values: [WITHDRAW_TOPIC] }]
-    }), makeWithdrawTrigger(geminiKey)),
-    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger(geminiKey))
+    }), makeWithdrawTrigger()),
+    cre.handler(httpCapability.trigger({}), makeEmergencyTrigger())
   ];
 };
 async function main() {

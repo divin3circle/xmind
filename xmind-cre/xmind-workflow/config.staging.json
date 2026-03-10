@@ -1,10 +1,6 @@
 {
-  "schedule": "0 */15 * * * *",
-  "vaultAddress": "0x105eb8c8b9414f39f10d6d8f18b2d385c18a331b",
   "creIntegrationAddress": "0x3f9320845083AC5Fd0dF1Aa330fb3506157fe918",
   "chainSelectorName": "avalanche-testnet-fuji",
   "backendUrl": "http://localhost:3000",
-  "mcpUrl": "http://localhost:8787",
-  "geminiApiKey": "AIzaSyBFZiUy53eEIgHaETfDfnd_NPI4bE0_VwM",
-  "aiSignerKey": "c5019c3164de5f22b965e1d97b82624d3019624a95623d494d69de6e1b39bc6a"
+  "mcpUrl": "http://localhost:8787"
 }
