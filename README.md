@@ -355,11 +355,3 @@ bun dev
 | **Database** | MongoDB (Mongoose) — AI audit logs |
 
 ---
-
-## Team
-
-Built with ❤️ for the Chainlink hackathon.
-
-- **Sylus Abel** — Project Lead, Frontend, CRE Workflow
-- **Samuel Musuu** — Smart Contract Architecture
-- **Ian Mongare** — MCP Server & AI Integration

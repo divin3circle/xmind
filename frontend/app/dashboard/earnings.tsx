@@ -58,7 +58,10 @@ function Earnings() {
                 <IconLoader2 size={16} className="animate-spin" />
               </span>
             ) : (
-              `$${parseFloat(earningsData?.usdcBalance || "0").toFixed(2)}`
+              `$${Number(earningsData?.usdcBalance || "0").toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
             )}
           </h1>
           <div className="flex w-full mt-4 items-center justify-between">
@@ -69,7 +72,10 @@ function Earnings() {
               {earningsLoading ? (
                 <IconLoader2 size={12} className="animate-spin" />
               ) : (
-                `${parseFloat(earningsData?.usdcBalance || "0").toFixed(2)} USDC.e`
+                `${Number(earningsData?.usdcBalance || "0").toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} USDC.e`
               )}
             </p>
           </div>
